@@ -220,13 +220,70 @@
   #app-loading h2 { font-family: var(--font-serif); font-size: 22px; color: var(--text); }
   #app-loading p { font-size: 13px; color: var(--text2); }
 
+  /* Mood log */
+  .mood-emoji-btn { font-size: 24px; padding: 10px 14px; border: 2px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; background: var(--surface); transition: all 0.15s; position: relative; }
+  .mood-emoji-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+  .mood-emoji-btn.selected { border-color: var(--rose); background: var(--rose-light); transform: scale(1.1); }
+  .mood-emoji-btn .mood-label { font-size: 9px; color: var(--text3); display: block; text-align: center; margin-top: 2px; font-family: var(--font-sans); }
+  .energy-btn { padding: 7px 14px; border: 1.5px solid var(--border); border-radius: 20px; cursor: pointer; font-size: 12px; font-weight: 500; background: var(--surface); color: var(--text2); transition: all 0.15s; }
+  .energy-btn.selected { border-color: var(--amber); background: var(--amber-light); color: var(--amber); }
+  .feeling-chip { padding: 5px 12px; border: 1.5px solid var(--border); border-radius: 20px; cursor: pointer; font-size: 12px; color: var(--text2); background: var(--surface); transition: all 0.15s; }
+  .feeling-chip.selected { border-color: var(--indigo); background: var(--indigo-light); color: var(--indigo); font-weight: 500; }
+  .mood-day-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; border: 2px solid transparent; transition: transform 0.15s; flex-shrink: 0; }
+  .mood-day-dot:hover { transform: scale(1.2); }
+  .mood-history-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .mood-history-item:last-child { border-bottom: none; }
+  .phase-pattern-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .phase-pattern-label { font-size: 12px; color: var(--text2); width: 80px; flex-shrink: 0; }
+  .phase-pattern-emojis { font-size: 16px; letter-spacing: 2px; }
+
   @media (max-width: 768px) {
-    .sidebar { width: 60px; }
-    .nav-item span { display: none; }
-    .nav-section { display: none; }
-    .logo p, .logo h1 { display: none; }
-    .main { margin-left: 60px; padding: 20px 16px; }
+    /* Hide sidebar entirely on mobile */
+    .sidebar { display: none; }
+    /* Main takes full width, with padding at bottom for tab bar */
+    .main { margin-left: 0; padding: 20px 16px 90px; }
     .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+
+  /* Bottom tab bar — mobile only */
+  .bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    z-index: 200;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .bottom-nav-inner {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .bottom-nav-inner::-webkit-scrollbar { display: none; }
+  .bottom-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px 6px;
+    min-width: 64px;
+    flex: 1;
+    cursor: pointer;
+    gap: 3px;
+    border: none;
+    background: none;
+    font-family: var(--font-sans);
+    color: var(--text3);
+    transition: color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .bottom-tab.active { color: var(--accent); }
+  .bottom-tab .tab-icon { font-size: 20px; line-height: 1; }
+  .bottom-tab .tab-label { font-size: 10px; font-weight: 500; white-space: nowrap; }
+  @media (max-width: 768px) {
+    .bottom-nav { display: block; }
   }
 </style>
 </head>
@@ -259,6 +316,9 @@
   <div class="nav-section">Health</div>
   <div class="nav-item" onclick="showPage('period', this)">
     <span class="nav-icon">🌸</span><span>Cycle Tracker</span>
+  </div>
+  <div class="nav-item" onclick="showPage('mood', this)">
+    <span class="nav-icon">🌙</span><span>Mood Log</span>
   </div>
   <div class="nav-section">Home</div>
   <div class="nav-item" onclick="showPage('grocery', this)">
@@ -408,6 +468,69 @@
       <p class="card-title">Cycle Phase Guide</p>
       <div class="phase-bar" id="phase-bar"></div>
       <div id="phase-tips" style="margin-top:14px; font-size:13px; color:var(--text2); line-height:1.7;"></div>
+    </div>
+  </div>
+
+  <!-- MOOD LOG -->
+  <div id="page-mood" class="page">
+    <div class="page-header">
+      <h2>Mood Log</h2>
+      <p>Track how you feel each day — mapped to your cycle phase</p>
+    </div>
+
+    <!-- Today's entry -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="flex-between" style="margin-bottom:16px;">
+        <p class="card-title" style="margin:0;">How are you feeling today?</p>
+        <span class="text-sm text-muted" id="mood-today-phase"></span>
+      </div>
+
+      <!-- Mood selector -->
+      <div style="margin-bottom:16px;">
+        <label style="margin-bottom:10px;">Overall mood</label>
+        <div id="mood-emoji-grid" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      </div>
+
+      <!-- Energy -->
+      <div style="margin-bottom:16px;">
+        <label>Energy level</label>
+        <div id="mood-energy-grid" style="display:flex;gap:8px;margin-top:8px;"></div>
+      </div>
+
+      <!-- Feelings multi-select -->
+      <div style="margin-bottom:16px;">
+        <label style="margin-bottom:8px;">What else are you feeling? <span class="text-muted">(pick all that apply)</span></label>
+        <div id="mood-feelings-grid" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+      </div>
+
+      <!-- Free note -->
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Journal note <span class="text-muted">(optional)</span></label>
+        <textarea id="mood-note" placeholder="Anything on your mind today..." style="min-height:80px;"></textarea>
+      </div>
+
+      <button class="btn btn-primary" onclick="saveMoodEntry()" style="width:100%;">Save Today's Entry</button>
+    </div>
+
+    <!-- Cycle mood map -->
+    <div class="grid-2" style="margin-bottom:16px;">
+      <div class="card">
+        <p class="card-title">This Cycle's Mood Map</p>
+        <div id="mood-cycle-map" style="min-height:80px;"></div>
+      </div>
+      <div class="card">
+        <p class="card-title">Phase Patterns</p>
+        <div id="mood-phase-patterns"></div>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="card">
+      <div class="flex-between" style="margin-bottom:14px;">
+        <p class="card-title" style="margin:0;">Recent Entries</p>
+        <span class="text-sm text-muted" id="mood-streak"></span>
+      </div>
+      <div id="mood-history"></div>
     </div>
   </div>
 
@@ -569,6 +692,44 @@
 
 </main>
 </div>
+
+<!-- Bottom nav — mobile only -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <button class="bottom-tab active" id="btab-calendar" onclick="showPage('calendar', this); setBottomTab('calendar')">
+      <span class="tab-icon">📅</span>
+      <span class="tab-label">Calendar</span>
+    </button>
+    <button class="bottom-tab" id="btab-todos" onclick="showPage('todos', this); setBottomTab('todos')">
+      <span class="tab-icon">✓</span>
+      <span class="tab-label">To-Dos</span>
+    </button>
+    <button class="bottom-tab" id="btab-notes" onclick="showPage('notes', this); setBottomTab('notes')">
+      <span class="tab-icon">📝</span>
+      <span class="tab-label">Notes</span>
+    </button>
+    <button class="bottom-tab" id="btab-mood" onclick="showPage('mood', this); setBottomTab('mood')">
+      <span class="tab-icon">🌙</span>
+      <span class="tab-label">Mood</span>
+    </button>
+    <button class="bottom-tab" id="btab-period" onclick="showPage('period', this); setBottomTab('period')">
+      <span class="tab-icon">🌸</span>
+      <span class="tab-label">Cycle</span>
+    </button>
+    <button class="bottom-tab" id="btab-grocery" onclick="showPage('grocery', this); setBottomTab('grocery')">
+      <span class="tab-icon">🛒</span>
+      <span class="tab-label">Grocery</span>
+    </button>
+    <button class="bottom-tab" id="btab-budget" onclick="showPage('budget', this); setBottomTab('budget')">
+      <span class="tab-icon">💵</span>
+      <span class="tab-label">Budget</span>
+    </button>
+    <button class="bottom-tab" id="btab-debt" onclick="showPage('debt', this); setBottomTab('debt')">
+      <span class="tab-icon">📉</span>
+      <span class="tab-label">Debt</span>
+    </button>
+  </div>
+</nav>
 
 <!-- Sync status pill -->
 <div class="sync-status saved" id="sync-status" style="display:none;">
@@ -738,7 +899,8 @@ const defaultState = {
     limits: { bills: 2825, life: 500, fun: 400, else: 303 },
     expenses: []
   },
-  debts: []
+  debts: [],
+  mood: {}  // keyed by date string "YYYY-MM-DD" → { emoji, energy, feelings[], note, phase, cycleDay }
 };
 
 window.state = JSON.parse(JSON.stringify(defaultState));
@@ -788,7 +950,8 @@ async function loadAndStart() {
           ...defaultState.budget,
           ...(data.budget || {}),
           limits: { ...defaultState.budget.limits, ...(data.budget?.limits || {}) }
-        }
+        },
+        mood: data.mood || {}
       };
     } else {
       // First time — seed sample credit card debt
@@ -814,6 +977,7 @@ async function loadAndStart() {
   renderDebts();
   renderNotes();
   renderTodos();
+  renderMood();
 }
 
 loadAndStart();
@@ -834,7 +998,8 @@ setTimeout(() => {
           ...defaultState.budget,
           ...(data.budget || {}),
           limits: { ...defaultState.budget.limits, ...(data.budget?.limits || {}) }
-        }
+        },
+        mood: data.mood || {}
       };
       // Re-render the active page
       const activePage = document.querySelector('.page.active');
@@ -847,6 +1012,7 @@ setTimeout(() => {
         else if (pageId === 'grocery') renderGrocery();
         else if (pageId === 'budget') renderBudget();
         else if (pageId === 'debt') renderDebts();
+        else if (pageId === 'mood') renderMood();
       }
     }
   });
@@ -856,11 +1022,18 @@ setTimeout(() => {
 
 <script>
 // ===== NAVIGATION =====
+function setBottomTab(id) {
+  document.querySelectorAll('.bottom-tab').forEach(t => t.classList.remove('active'));
+  const tab = document.getElementById('btab-' + id);
+  if (tab) tab.classList.add('active');
+}
+
 function showPage(id, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
-  if (el) el.classList.add('active');
+  if (el && el.classList.contains('nav-item')) el.classList.add('active');
+  setBottomTab(id);
   if (id === 'calendar') renderCalendar();
   if (id === 'todos') renderTodos();
   if (id === 'notes') renderNotes();
@@ -868,6 +1041,7 @@ function showPage(id, el) {
   if (id === 'grocery') renderGrocery();
   if (id === 'budget') renderBudget();
   if (id === 'debt') renderDebts();
+  if (id === 'mood') renderMood();
 }
 
 // ===== CALENDAR =====
@@ -1556,6 +1730,263 @@ function renderDebts() {
       ${debt.payments.length ? `<div class="text-sm text-muted" style="margin-top:6px;">Last payment: $${debt.payments[debt.payments.length-1].amount} on ${debt.payments[debt.payments.length-1].date}</div>` : ''}
     </div>`;
   }).join('');
+}
+
+// ===== MOOD LOG =====
+const MOOD_EMOJIS = [
+  { emoji: '😄', label: 'Great' },
+  { emoji: '🙂', label: 'Good' },
+  { emoji: '😐', label: 'Meh' },
+  { emoji: '😔', label: 'Low' },
+  { emoji: '😢', label: 'Sad' },
+  { emoji: '😤', label: 'Angry' },
+  { emoji: '😰', label: 'Anxious' },
+  { emoji: '🤩', label: 'Excited' },
+];
+const ENERGY_LEVELS = ['⚡ High', '🔆 Medium', '🌿 Low', '😴 Drained'];
+const FEELINGS = ['Calm','Focused','Creative','Grateful','Overwhelmed','Irritable','Confident','Lonely','Motivated','Scattered','Tender','Restless','Content','Hopeful','Drained','Sensual'];
+
+const PHASE_EMOJIS = { menstrual: '🩸', follicular: '🌱', ovulation: '✨', luteal: '🌙' };
+
+function getCyclePhaseForDate(dateStr) {
+  if (!window.state.period.lastStart) return null;
+  const start = new Date(window.state.period.lastStart);
+  const target = new Date(dateStr);
+  const diff = Math.floor((target - start) / (1000 * 60 * 60 * 24));
+  const cycleLen = window.state.period.cycleLength;
+  const dayInCycle = ((diff % cycleLen) + cycleLen) % cycleLen + 1;
+  if (dayInCycle <= 5) return { phase: 'menstrual', name: 'Menstrual', day: dayInCycle, color: 'var(--rose)' };
+  if (dayInCycle <= 13) return { phase: 'follicular', name: 'Follicular', day: dayInCycle, color: 'var(--sage)' };
+  if (dayInCycle <= 16) return { phase: 'ovulation', name: 'Ovulation', day: dayInCycle, color: 'var(--amber)' };
+  return { phase: 'luteal', name: 'Luteal', day: dayInCycle, color: 'var(--indigo)' };
+}
+
+let selectedMoodEmoji = null;
+let selectedEnergy = null;
+let selectedFeelings = new Set();
+
+function renderMood() {
+  const today = new Date().toISOString().split('T')[0];
+  const todayEntry = window.state.mood[today] || {};
+  const phaseInfo = getCyclePhaseForDate(today);
+
+  // Restore today's saved selections
+  selectedMoodEmoji = todayEntry.emoji || null;
+  selectedEnergy = todayEntry.energy || null;
+  selectedFeelings = new Set(todayEntry.feelings || []);
+
+  // Phase label
+  const phaseEl = document.getElementById('mood-today-phase');
+  if (phaseEl) {
+    phaseEl.textContent = phaseInfo
+      ? `${PHASE_EMOJIS[phaseInfo.phase]} ${phaseInfo.name} phase · Day ${phaseInfo.day}`
+      : '';
+    phaseEl.style.color = phaseInfo?.color || 'var(--text2)';
+  }
+
+  // Emoji grid
+  const emojiGrid = document.getElementById('mood-emoji-grid');
+  if (emojiGrid) {
+    emojiGrid.innerHTML = MOOD_EMOJIS.map(m => `
+      <button class="mood-emoji-btn ${selectedMoodEmoji === m.emoji ? 'selected' : ''}"
+        onclick="selectMoodEmoji('${m.emoji}', this)">
+        ${m.emoji}<span class="mood-label">${m.label}</span>
+      </button>`).join('');
+  }
+
+  // Energy grid
+  const energyGrid = document.getElementById('mood-energy-grid');
+  if (energyGrid) {
+    energyGrid.innerHTML = ENERGY_LEVELS.map(e => `
+      <button class="energy-btn ${selectedEnergy === e ? 'selected' : ''}"
+        onclick="selectEnergy('${e}', this)">${e}</button>`).join('');
+  }
+
+  // Feelings grid
+  const feelingsGrid = document.getElementById('mood-feelings-grid');
+  if (feelingsGrid) {
+    feelingsGrid.innerHTML = FEELINGS.map(f => `
+      <div class="feeling-chip ${selectedFeelings.has(f) ? 'selected' : ''}"
+        onclick="toggleFeeling('${f}', this)">${f}</div>`).join('');
+  }
+
+  // Note
+  const noteEl = document.getElementById('mood-note');
+  if (noteEl) noteEl.value = todayEntry.note || '';
+
+  // Cycle map
+  renderMoodCycleMap();
+
+  // Phase patterns
+  renderMoodPhasePatterns();
+
+  // History
+  renderMoodHistory();
+
+  // Streak
+  renderMoodStreak();
+}
+
+function selectMoodEmoji(emoji, btn) {
+  selectedMoodEmoji = selectedMoodEmoji === emoji ? null : emoji;
+  document.querySelectorAll('.mood-emoji-btn').forEach(b => b.classList.remove('selected'));
+  if (selectedMoodEmoji) btn.classList.add('selected');
+}
+
+function selectEnergy(level, btn) {
+  selectedEnergy = selectedEnergy === level ? null : level;
+  document.querySelectorAll('.energy-btn').forEach(b => b.classList.remove('selected'));
+  if (selectedEnergy) btn.classList.add('selected');
+}
+
+function toggleFeeling(feeling, el) {
+  if (selectedFeelings.has(feeling)) {
+    selectedFeelings.delete(feeling);
+    el.classList.remove('selected');
+  } else {
+    selectedFeelings.add(feeling);
+    el.classList.add('selected');
+  }
+}
+
+function saveMoodEntry() {
+  if (!selectedMoodEmoji) { alert('Pick a mood emoji first!'); return; }
+  const today = new Date().toISOString().split('T')[0];
+  const phaseInfo = getCyclePhaseForDate(today);
+  window.state.mood[today] = {
+    emoji: selectedMoodEmoji,
+    energy: selectedEnergy,
+    feelings: [...selectedFeelings],
+    note: document.getElementById('mood-note').value.trim(),
+    phase: phaseInfo?.phase || null,
+    cycleDay: phaseInfo?.day || null,
+    savedAt: new Date().toISOString()
+  };
+  save();
+  renderMood();
+  // Brief confirmation
+  const btn = document.querySelector('#page-mood .btn-primary');
+  if (btn) { btn.textContent = '✓ Saved!'; setTimeout(() => { btn.textContent = "Save Today's Entry"; }, 1500); }
+}
+
+function renderMoodCycleMap() {
+  const el = document.getElementById('mood-cycle-map');
+  if (!el) return;
+  if (!window.state.period.lastStart) {
+    el.innerHTML = '<div class="empty-state" style="padding:16px 0;">Log your period date in Cycle Tracker to see your cycle map</div>';
+    return;
+  }
+
+  // Get current cycle start
+  const start = new Date(window.state.period.lastStart);
+  const today = new Date();
+  let cycleStart = new Date(start);
+  while (new Date(cycleStart.getTime() + window.state.period.cycleLength * 86400000) <= today) {
+    cycleStart.setDate(cycleStart.getDate() + window.state.period.cycleLength);
+  }
+  // Go back one cycle if needed
+  if (cycleStart > today) cycleStart.setDate(cycleStart.getDate() - window.state.period.cycleLength);
+
+  const dots = [];
+  for (let d = 0; d < window.state.period.cycleLength; d++) {
+    const date = new Date(cycleStart);
+    date.setDate(date.getDate() + d);
+    if (date > today) break;
+    const dateStr = date.toISOString().split('T')[0];
+    const entry = window.state.mood[dateStr];
+    const phaseInfo = getCyclePhaseForDate(dateStr);
+    const isToday = dateStr === today.toISOString().split('T')[0];
+    dots.push(`
+      <div class="mood-day-dot"
+        style="background:${phaseInfo ? phaseInfo.color + '22' : 'var(--surface2)'};
+               border-color:${isToday ? 'var(--accent)' : 'transparent'};"
+        title="Day ${d+1} · ${dateStr}${entry ? ' · ' + entry.emoji : ''}">
+        ${entry ? entry.emoji : '<span style="font-size:10px;color:var(--text3);">' + (d+1) + '</span>'}
+      </div>`);
+  }
+
+  el.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">${dots.join('')}</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;">
+      <span class="text-sm text-muted">🩸 Menstrual</span>
+      <span class="text-sm text-muted">🌱 Follicular</span>
+      <span class="text-sm text-muted">✨ Ovulation</span>
+      <span class="text-sm text-muted">🌙 Luteal</span>
+    </div>`;
+}
+
+function renderMoodPhasePatterns() {
+  const el = document.getElementById('mood-phase-patterns');
+  if (!el) return;
+  const phases = ['menstrual', 'follicular', 'ovulation', 'luteal'];
+  const phaseNames = { menstrual: 'Menstrual', follicular: 'Follicular', ovulation: 'Ovulation', luteal: 'Luteal' };
+  const phaseColors = { menstrual: 'var(--rose)', follicular: 'var(--sage)', ovulation: 'var(--amber)', luteal: 'var(--indigo)' };
+
+  const entries = Object.values(window.state.mood).filter(e => e.phase);
+  if (!entries.length) {
+    el.innerHTML = '<div class="empty-state" style="padding:16px 0;">Patterns appear after a few days of logging</div>';
+    return;
+  }
+
+  el.innerHTML = phases.map(phase => {
+    const phaseEntries = entries.filter(e => e.phase === phase);
+    if (!phaseEntries.length) return '';
+    const emojis = phaseEntries.slice(-5).map(e => e.emoji).join(' ');
+    return `<div class="phase-pattern-bar">
+      <span class="phase-pattern-label" style="color:${phaseColors[phase]};font-weight:500;">${phaseNames[phase]}</span>
+      <span class="phase-pattern-emojis">${emojis}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderMoodHistory() {
+  const el = document.getElementById('mood-history');
+  if (!el) return;
+  const entries = Object.entries(window.state.mood)
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .slice(0, 14);
+
+  if (!entries.length) {
+    el.innerHTML = '<div class="empty-state">No entries yet — log today\'s mood above!</div>';
+    return;
+  }
+
+  el.innerHTML = entries.map(([date, entry]) => {
+    const phaseInfo = getCyclePhaseForDate(date);
+    const d = new Date(date);
+    const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    return `<div class="mood-history-item">
+      <div class="flex-between" style="margin-bottom:4px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:22px;">${entry.emoji}</span>
+          <div>
+            <span style="font-size:13px;font-weight:500;">${label}</span>
+            ${phaseInfo ? `<span class="text-sm text-muted" style="margin-left:6px;color:${phaseInfo.color}">${PHASE_EMOJIS[phaseInfo.phase]} ${phaseInfo.name}</span>` : ''}
+          </div>
+        </div>
+        ${entry.energy ? `<span style="font-size:11px;color:var(--text3);">${entry.energy}</span>` : ''}
+      </div>
+      ${entry.feelings?.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
+        ${entry.feelings.map(f => `<span style="font-size:11px;padding:2px 8px;background:var(--indigo-light);color:var(--indigo);border-radius:10px;">${f}</span>`).join('')}
+      </div>` : ''}
+      ${entry.note ? `<div class="text-sm text-muted" style="font-style:italic;">"${entry.note}"</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderMoodStreak() {
+  const el = document.getElementById('mood-streak');
+  if (!el) return;
+  let streak = 0;
+  const today = new Date();
+  for (let i = 0; i < 60; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    if (window.state.mood[dateStr]) streak++;
+    else if (i > 0) break;
+  }
+  el.textContent = streak > 1 ? `🔥 ${streak} day streak` : streak === 1 ? '✨ Logged today' : '';
 }
 
 // ===== NOTIFICATIONS =====
