@@ -1,0 +1,2197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Life OS</title>
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#C4956A">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- iOS specific -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Life OS">
+<link rel="apple-touch-icon" href="https://api.dicebear.com/7.x/shapes/svg?seed=lifeos&backgroundColor=C4956A">
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAF9F6;
+    --surface: #FFFFFF;
+    --surface2: #F4F2ED;
+    --border: #E8E4DC;
+    --text: #1A1814;
+    --text2: #6B6560;
+    --text3: #A8A39C;
+    --accent: #C4956A;
+    --accent-light: #F5EDE3;
+    --rose: #D4748A;
+    --rose-light: #FCF0F3;
+    --teal: #4A9B8E;
+    --teal-light: #EAF5F3;
+    --indigo: #6B7FD4;
+    --indigo-light: #EEF1FC;
+    --sage: #7A9E7E;
+    --sage-light: #EFF5EF;
+    --amber: #D4A843;
+    --amber-light: #FDF5E3;
+    --coral: #D46B5A;
+    --coral-light: #FCF0EE;
+    --font-serif: 'Playfair Display', Georgia, serif;
+    --font-sans: 'DM Sans', sans-serif;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 28px 0; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; display: flex; flex-direction: column; }
+  .main { margin-left: 220px; flex: 1; padding: 32px; min-height: 100vh; }
+
+  .logo { padding: 0 20px 24px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .logo h1 { font-family: var(--font-serif); font-size: 18px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+  .logo p { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; cursor: pointer; font-size: 13.5px; color: var(--text2); border-left: 3px solid transparent; transition: all 0.15s; font-weight: 400; }
+  .nav-item:hover { color: var(--text); background: var(--surface2); }
+  .nav-item.active { color: var(--text); border-left-color: var(--accent); background: var(--accent-light); font-weight: 500; }
+  .nav-icon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .nav-section { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); padding: 16px 20px 6px; font-weight: 500; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-header { margin-bottom: 28px; }
+  .page-header h2 { font-family: var(--font-serif); font-size: 26px; font-weight: 500; color: var(--text); }
+  .page-header p { color: var(--text2); font-size: 13.5px; margin-top: 4px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .card-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); font-weight: 500; margin-bottom: 14px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); font-family: var(--font-sans); font-size: 13px; color: var(--text); cursor: pointer; font-weight: 400; transition: all 0.15s; }
+  .btn:hover { background: var(--surface2); }
+  .btn-primary { background: var(--accent); color: white; border-color: var(--accent); font-weight: 500; }
+  .btn-primary:hover { background: #B8845A; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-danger { border-color: var(--coral); color: var(--coral); }
+  .btn-danger:hover { background: var(--coral-light); }
+
+  input[type="text"], input[type="number"], input[type="date"], textarea, select {
+    font-family: var(--font-sans); font-size: 13.5px; color: var(--text);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 8px 12px; width: 100%;
+    outline: none; transition: border-color 0.15s;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 72px; }
+  label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 5px; font-weight: 500; }
+  .form-group { margin-bottom: 14px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .tag { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; gap: 4px; }
+  .tag-work { background: var(--indigo-light); color: var(--indigo); }
+  .tag-social { background: var(--rose-light); color: var(--rose); }
+  .tag-travel { background: var(--teal-light); color: var(--teal); }
+  .tag-task { background: var(--amber-light); color: var(--amber); }
+  .tag-health { background: var(--sage-light); color: var(--sage); }
+  .tag-personal { background: var(--accent-light); color: var(--accent); }
+
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); border-radius: var(--radius); overflow: hidden; }
+  .cal-header { background: var(--surface2); padding: 8px 4px; text-align: center; font-size: 11px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+  .cal-day { background: var(--surface); padding: 6px 4px; min-height: 72px; position: relative; cursor: pointer; }
+  .cal-day:hover { background: var(--surface2); }
+  .cal-day.today { background: var(--accent-light); }
+  .cal-day.other-month .cal-date { color: var(--text3); }
+  .cal-date { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+  .cal-dot { width: 100%; padding: 1px 2px; border-radius: 3px; font-size: 9px; font-weight: 500; margin-bottom: 1px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: pointer; }
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .cal-nav h3 { font-family: var(--font-serif); font-size: 18px; }
+  .cal-dot.work { background: var(--indigo-light); color: var(--indigo); }
+  .cal-dot.social { background: var(--rose-light); color: var(--rose); }
+  .cal-dot.travel { background: var(--teal-light); color: var(--teal); }
+  .cal-dot.task { background: var(--amber-light); color: var(--amber); }
+  .cal-dot.health { background: var(--sage-light); color: var(--sage); }
+  .cal-dot.period { background: var(--rose-light); color: var(--rose); border: 1px solid var(--rose); }
+
+  .todo-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .todo-item:last-child { border-bottom: none; }
+  .todo-check { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--border); cursor: pointer; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .todo-check.checked { background: var(--accent); border-color: var(--accent); }
+  .todo-check.checked::after { content: '✓'; color: white; font-size: 10px; }
+  .todo-text { flex: 1; font-size: 13.5px; line-height: 1.5; }
+  .todo-text.done { text-decoration: line-through; color: var(--text3); }
+  .todo-del { color: var(--text3); cursor: pointer; font-size: 16px; opacity: 0; transition: opacity 0.15s; }
+  .todo-item:hover .todo-del { opacity: 1; }
+  .todo-priority { font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 500; margin-left: 6px; }
+  .priority-high { background: var(--coral-light); color: var(--coral); }
+  .priority-med { background: var(--amber-light); color: var(--amber); }
+  .priority-low { background: var(--sage-light); color: var(--sage); }
+
+  .cycle-ring { position: relative; display: flex; align-items: center; justify-content: center; }
+  .cycle-info { text-align: center; }
+  .cycle-info .big-num { font-family: var(--font-serif); font-size: 42px; font-weight: 500; color: var(--rose); line-height: 1; }
+  .cycle-info .sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .symptom-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .symptom-btn { padding: 8px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); text-align: center; cursor: pointer; font-size: 12px; color: var(--text2); transition: all 0.15s; }
+  .symptom-btn.active { border-color: var(--rose); background: var(--rose-light); color: var(--rose); font-weight: 500; }
+  .phase-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 12px; }
+  .phase-seg { padding: 8px 4px; border-radius: var(--radius-sm); text-align: center; font-size: 10.5px; font-weight: 500; }
+  .phase-period { background: var(--rose-light); color: var(--rose); }
+  .phase-follicular { background: var(--sage-light); color: var(--sage); }
+  .phase-ovulation { background: var(--amber-light); color: var(--amber); }
+  .phase-luteal { background: var(--indigo-light); color: var(--indigo); }
+  .phase-seg.current { outline: 2px solid currentColor; }
+
+  .budget-bar-wrap { background: var(--surface2); border-radius: 20px; height: 8px; overflow: hidden; margin: 8px 0; }
+  .budget-bar { height: 100%; border-radius: 20px; transition: width 0.4s ease; }
+  .budget-stat { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); }
+  .debt-item { padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .debt-item:last-child { border-bottom: none; }
+  .debt-name { font-size: 14px; font-weight: 500; }
+  .debt-amount { font-size: 22px; font-family: var(--font-serif); color: var(--coral); }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; }
+  .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-family: var(--font-serif); font-weight: 500; }
+
+  .grocery-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .grocery-item:last-child { border-bottom: none; }
+  .grocery-check { width: 16px; height: 16px; border: 1.5px solid var(--border); border-radius: 3px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .grocery-check.checked { background: var(--teal); border-color: var(--teal); }
+  .grocery-check.checked::after { content: '✓'; color: white; font-size: 9px; }
+  .grocery-text { flex: 1; font-size: 13.5px; }
+  .grocery-text.done { text-decoration: line-through; color: var(--text3); }
+  .ingredient-chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: var(--teal-light); color: var(--teal); border-radius: 20px; font-size: 12px; font-weight: 500; margin: 3px; }
+  .ingredient-chip button { background: none; border: none; cursor: pointer; color: var(--teal); font-size: 14px; line-height: 1; padding: 0; }
+  .meal-card { background: var(--surface2); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 10px; }
+  .meal-card h4 { font-family: var(--font-serif); font-size: 15px; margin-bottom: 4px; }
+  .meal-card p { font-size: 12.5px; color: var(--text2); line-height: 1.6; }
+  .meal-phase { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 6px; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: var(--radius); padding: 24px; width: 420px; max-width: 90vw; box-shadow: var(--shadow-md); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .modal-header h3 { font-family: var(--font-serif); font-size: 18px; }
+  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text3); }
+
+  .loading { display: flex; align-items: center; gap: 8px; color: var(--text2); font-size: 13px; padding: 20px 0; }
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Sync status indicator */
+  .sync-status { position: fixed; bottom: 16px; right: 16px; padding: 8px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; z-index: 999; transition: all 0.3s; box-shadow: var(--shadow-md); }
+  .sync-status.syncing { background: var(--amber-light); color: var(--amber); }
+  .sync-status.saved { background: var(--sage-light); color: var(--sage); }
+  .sync-status.error { background: var(--coral-light); color: var(--coral); }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .sync-dot.pulse { animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .flex { display: flex; }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; }
+  .gap-8 { gap: 8px; }
+  .gap-12 { gap: 12px; }
+  .mt-8 { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-20 { margin-top: 20px; }
+  .mb-8 { margin-bottom: 8px; }
+  .text-sm { font-size: 12.5px; }
+  .text-muted { color: var(--text2); }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--text2); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .empty-state { text-align: center; padding: 32px 16px; color: var(--text3); font-size: 13px; }
+  .section-tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+  .tab { padding: 6px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; border: 1px solid var(--border); color: var(--text2); background: var(--surface); font-family: var(--font-sans); transition: all 0.15s; }
+  .tab.active { background: var(--text); color: white; border-color: var(--text); }
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+
+  /* Loading overlay for initial Firebase load */
+  #app-loading { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 16px; }
+  #app-loading h2 { font-family: var(--font-serif); font-size: 22px; color: var(--text); }
+  #app-loading p { font-size: 13px; color: var(--text2); }
+
+  /* Mood log */
+  .mood-emoji-btn { font-size: 24px; padding: 10px 14px; border: 2px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; background: var(--surface); transition: all 0.15s; position: relative; }
+  .mood-emoji-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+  .mood-emoji-btn.selected { border-color: var(--rose); background: var(--rose-light); transform: scale(1.1); }
+  .mood-emoji-btn .mood-label { font-size: 9px; color: var(--text3); display: block; text-align: center; margin-top: 2px; font-family: var(--font-sans); }
+  .energy-btn { padding: 7px 14px; border: 1.5px solid var(--border); border-radius: 20px; cursor: pointer; font-size: 12px; font-weight: 500; background: var(--surface); color: var(--text2); transition: all 0.15s; }
+  .energy-btn.selected { border-color: var(--amber); background: var(--amber-light); color: var(--amber); }
+  .feeling-chip { padding: 5px 12px; border: 1.5px solid var(--border); border-radius: 20px; cursor: pointer; font-size: 12px; color: var(--text2); background: var(--surface); transition: all 0.15s; }
+  .feeling-chip.selected { border-color: var(--indigo); background: var(--indigo-light); color: var(--indigo); font-weight: 500; }
+  .mood-day-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; border: 2px solid transparent; transition: transform 0.15s; flex-shrink: 0; }
+  .mood-day-dot:hover { transform: scale(1.2); }
+  .mood-history-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .mood-history-item:last-child { border-bottom: none; }
+  .phase-pattern-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .phase-pattern-label { font-size: 12px; color: var(--text2); width: 80px; flex-shrink: 0; }
+  .phase-pattern-emojis { font-size: 16px; letter-spacing: 2px; }
+
+  @media (max-width: 1024px) {
+    /* Hide sidebar entirely on mobile/tablet */
+    .sidebar { display: none; }
+    /* Main takes full width, with padding at bottom for tab bar */
+    .main { margin-left: 0; padding: 20px 16px 90px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+
+  /* Bottom tab bar */
+  .bottom-nav {
+    display: block; /* always on by default */
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    z-index: 200;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .bottom-nav-inner {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .bottom-nav-inner::-webkit-scrollbar { display: none; }
+  .bottom-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px 6px;
+    min-width: 64px;
+    flex: 1;
+    cursor: pointer;
+    gap: 3px;
+    border: none;
+    background: none;
+    font-family: var(--font-sans);
+    color: var(--text3);
+    transition: color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .bottom-tab.active { color: var(--accent); }
+  .bottom-tab .tab-icon { font-size: 20px; line-height: 1; }
+  .bottom-tab .tab-label { font-size: 10px; font-weight: 500; white-space: nowrap; }
+  /* Hide bottom nav on large screens where sidebar is visible */
+  @media (min-width: 1025px) {
+    .bottom-nav { display: none; }
+    .main { padding-bottom: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Initial loading screen -->
+<div id="app-loading">
+  <div class="spinner" style="width:28px;height:28px;border-width:3px;"></div>
+  <h2>Life OS</h2>
+  <p>Connecting to cloud...</p>
+</div>
+
+<div class="app" style="display:none;" id="app-shell">
+
+<nav class="sidebar">
+  <div class="logo">
+    <h1>Life OS</h1>
+    <p>your personal command center</p>
+  </div>
+  <div class="nav-section">Organize</div>
+  <div class="nav-item active" onclick="showPage('calendar', this)">
+    <span class="nav-icon">📅</span><span>Calendar</span>
+  </div>
+  <div class="nav-item" onclick="showPage('todos', this)">
+    <span class="nav-icon">✓</span><span>To-Do Lists</span>
+  </div>
+  <div class="nav-item" onclick="showPage('notes', this)">
+    <span class="nav-icon">📝</span><span>Notes</span>
+  </div>
+  <div class="nav-section">Health</div>
+  <div class="nav-item" onclick="showPage('period', this)">
+    <span class="nav-icon">🌸</span><span>Cycle Tracker</span>
+  </div>
+  <div class="nav-item" onclick="showPage('mood', this)">
+    <span class="nav-icon">🌙</span><span>Mood Log</span>
+  </div>
+  <div class="nav-section">Home</div>
+  <div class="nav-item" onclick="showPage('grocery', this)">
+    <span class="nav-icon">🛒</span><span>Grocery & Meals</span>
+  </div>
+  <div class="nav-section">Money</div>
+  <div class="nav-item" onclick="showPage('budget', this)">
+    <span class="nav-icon">💵</span><span>Budget</span>
+  </div>
+  <div class="nav-item" onclick="showPage('debt', this)">
+    <span class="nav-icon">📉</span><span>Debt Tracker</span>
+  </div>
+</nav>
+
+<main class="main">
+
+  <!-- CALENDAR -->
+  <div id="page-calendar" class="page active">
+    <div class="page-header">
+      <div class="flex-between">
+        <div>
+          <h2>Calendar</h2>
+          <p>Your schedule, color-coded by life area</p>
+        </div>
+        <button class="btn btn-primary" onclick="openEventModal()">+ Add Event</button>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--indigo)"></div> Work</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--rose)"></div> Social</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div> Travel</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div> Task</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--sage)"></div> Health</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--rose)"></div> Period</div>
+    </div>
+    <div class="card">
+      <div class="cal-nav">
+        <button class="btn btn-sm" onclick="changeMonth(-1)">← Prev</button>
+        <h3 id="cal-month-label"></h3>
+        <button class="btn btn-sm" onclick="changeMonth(1)">Next →</button>
+      </div>
+      <div class="calendar-grid" id="cal-grid">
+        <div class="cal-header">Sun</div><div class="cal-header">Mon</div>
+        <div class="cal-header">Tue</div><div class="cal-header">Wed</div>
+        <div class="cal-header">Thu</div><div class="cal-header">Fri</div>
+        <div class="cal-header">Sat</div>
+      </div>
+    </div>
+    <div id="day-events-panel" style="display:none; margin-top:16px;">
+      <div class="card">
+        <div class="flex-between mb-8">
+          <p class="card-title" id="day-events-title">Events</p>
+          <button class="btn btn-sm" onclick="document.getElementById('day-events-panel').style.display='none'">✕</button>
+        </div>
+        <div id="day-events-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TO-DOs -->
+  <div id="page-todos" class="page">
+    <div class="page-header">
+      <h2>To-Do Lists</h2>
+      <p>Short-term tasks and long-term goals</p>
+    </div>
+    <div class="section-tabs">
+      <button class="tab active" onclick="switchTodoTab('short', this)">This Week</button>
+      <button class="tab" onclick="switchTodoTab('long', this)">Long-Term Goals</button>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="flex-between" style="margin-bottom:14px;">
+          <p class="card-title" id="todo-tab-label">This Week's Tasks</p>
+        </div>
+        <div id="todo-input-area" style="margin-bottom:14px;">
+          <div class="form-row" style="margin-bottom:8px;">
+            <input type="text" id="todo-new-text" placeholder="Add a task..." onkeydown="if(event.key==='Enter') addTodo()">
+            <select id="todo-priority">
+              <option value="med">Medium priority</option>
+              <option value="high">High priority</option>
+              <option value="low">Low priority</option>
+            </select>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="addTodo()" style="width:100%;">Add Task</button>
+        </div>
+        <div id="todo-list"></div>
+      </div>
+      <div class="card">
+        <p class="card-title">Progress</p>
+        <div id="todo-stats"></div>
+        <div class="divider"></div>
+        <p class="card-title" style="margin-top:0">Completed</p>
+        <div id="todo-done-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PERIOD -->
+  <div id="page-period" class="page">
+    <div class="page-header">
+      <h2>Cycle Tracker</h2>
+      <p>Track your cycle, symptoms, and get predictions</p>
+    </div>
+    <div class="grid-2" style="margin-bottom:16px;">
+      <div class="card" style="text-align:center; padding: 28px 20px;">
+        <p class="card-title">Current Phase</p>
+        <div class="cycle-ring" style="margin: 8px 0 16px;">
+          <svg width="110" height="110" viewBox="0 0 110 110">
+            <circle cx="55" cy="55" r="46" fill="none" stroke="#F4F2ED" stroke-width="10"/>
+            <circle cx="55" cy="55" r="46" fill="none" stroke="#D4748A" stroke-width="10" stroke-dasharray="289" id="phase-arc" stroke-dashoffset="200" stroke-linecap="round" transform="rotate(-90 55 55)"/>
+          </svg>
+          <div style="position:absolute; text-align:center;">
+            <div class="big-num" id="cycle-day-num">—</div>
+            <div class="sub">cycle day</div>
+          </div>
+        </div>
+        <div style="font-size:14px; font-weight:500;" id="phase-name">—</div>
+        <div class="sub mt-8" id="phase-desc">Log your last period to begin</div>
+      </div>
+      <div class="card">
+        <p class="card-title">Period Prediction</p>
+        <div id="period-prediction">
+          <div class="empty-state">Log your last period date to see predictions</div>
+        </div>
+        <div class="divider"></div>
+        <p class="card-title">Log Last Period</p>
+        <div class="form-group">
+          <label>Start date</label>
+          <input type="date" id="period-start-date">
+        </div>
+        <div class="form-group">
+          <label>Average cycle length (days)</label>
+          <input type="number" id="cycle-length" value="28" min="21" max="40">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="savePeriodData()" style="width:100%;">Save & Predict</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="flex-between" style="margin-bottom:14px;">
+        <p class="card-title" style="margin:0;">Today's Symptoms</p>
+        <span class="text-sm text-muted" id="symptom-date-label"></span>
+      </div>
+      <div class="symptom-grid" id="symptom-grid"></div>
+      <button class="btn btn-sm mt-12" onclick="saveSymptoms()" style="width:100%">Save Today's Symptoms</button>
+    </div>
+    <div class="card mt-16">
+      <p class="card-title">Cycle Phase Guide</p>
+      <div class="phase-bar" id="phase-bar"></div>
+      <div id="phase-tips" style="margin-top:14px; font-size:13px; color:var(--text2); line-height:1.7;"></div>
+    </div>
+  </div>
+
+  <!-- MOOD LOG -->
+  <div id="page-mood" class="page">
+    <div class="page-header">
+      <h2>Mood Log</h2>
+      <p>Track how you feel each day — mapped to your cycle phase</p>
+    </div>
+
+    <!-- Today's entry -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="flex-between" style="margin-bottom:16px;">
+        <p class="card-title" style="margin:0;">How are you feeling today?</p>
+        <span class="text-sm text-muted" id="mood-today-phase"></span>
+      </div>
+
+      <!-- Mood selector -->
+      <div style="margin-bottom:16px;">
+        <label style="margin-bottom:10px;">Overall mood</label>
+        <div id="mood-emoji-grid" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      </div>
+
+      <!-- Energy -->
+      <div style="margin-bottom:16px;">
+        <label>Energy level</label>
+        <div id="mood-energy-grid" style="display:flex;gap:8px;margin-top:8px;"></div>
+      </div>
+
+      <!-- Feelings multi-select -->
+      <div style="margin-bottom:16px;">
+        <label style="margin-bottom:8px;">What else are you feeling? <span class="text-muted">(pick all that apply)</span></label>
+        <div id="mood-feelings-grid" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+      </div>
+
+      <!-- Free note -->
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Journal note <span class="text-muted">(optional)</span></label>
+        <textarea id="mood-note" placeholder="Anything on your mind today..." style="min-height:80px;"></textarea>
+      </div>
+
+      <button class="btn btn-primary" onclick="saveMoodEntry()" style="width:100%;">Save Today's Entry</button>
+    </div>
+
+    <!-- Cycle mood map -->
+    <div class="grid-2" style="margin-bottom:16px;">
+      <div class="card">
+        <p class="card-title">This Cycle's Mood Map</p>
+        <div id="mood-cycle-map" style="min-height:80px;"></div>
+      </div>
+      <div class="card">
+        <p class="card-title">Phase Patterns</p>
+        <div id="mood-phase-patterns"></div>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="card">
+      <div class="flex-between" style="margin-bottom:14px;">
+        <p class="card-title" style="margin:0;">Recent Entries</p>
+        <span class="text-sm text-muted" id="mood-streak"></span>
+      </div>
+      <div id="mood-history"></div>
+    </div>
+  </div>
+
+  <!-- GROCERY -->
+  <div id="page-grocery" class="page">
+    <div class="page-header">
+      <h2>Grocery & Meals</h2>
+      <p>Your shopping list + AI-powered meal ideas based on what you have (and your cycle)</p>
+    </div>
+    <div class="section-tabs">
+      <button class="tab active" onclick="switchGroceryTab('list', this)">Shopping List</button>
+      <button class="tab" onclick="switchGroceryTab('pantry', this)">Pantry & Meals</button>
+    </div>
+    <div id="grocery-tab-list">
+      <div class="grid-2">
+        <div class="card">
+          <p class="card-title">Add Items</p>
+          <div class="form-row" style="margin-bottom:10px;">
+            <input type="text" id="grocery-new" placeholder="e.g. oat milk, avocados..." onkeydown="if(event.key==='Enter') addGroceryItem()">
+            <select id="grocery-cat">
+              <option value="produce">🥦 Produce</option>
+              <option value="protein">🥩 Protein</option>
+              <option value="dairy">🧀 Dairy</option>
+              <option value="pantry">🫙 Pantry</option>
+              <option value="frozen">❄️ Frozen</option>
+              <option value="snacks">🍎 Snacks</option>
+              <option value="other">📦 Other</option>
+            </select>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="addGroceryItem()" style="width:100%">Add to List</button>
+        </div>
+        <div class="card">
+          <div class="flex-between" style="margin-bottom:10px;">
+            <p class="card-title" style="margin:0">Shopping List</p>
+            <button class="btn btn-sm btn-danger" onclick="clearCheckedGrocery()">Clear checked</button>
+          </div>
+          <div id="grocery-list"></div>
+        </div>
+      </div>
+    </div>
+    <div id="grocery-tab-pantry" style="display:none;">
+      <div class="card" style="margin-bottom:16px;">
+        <p class="card-title">What's in your pantry/fridge?</p>
+        <p class="text-sm text-muted" style="margin-bottom:12px;">Add ingredients you have on hand and I'll generate meal ideas for you.</p>
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+          <input type="text" id="ingredient-input" placeholder="e.g. chicken, rice, spinach..." onkeydown="if(event.key==='Enter') addIngredient()" style="flex:1;">
+          <button class="btn btn-primary" onclick="addIngredient()">Add</button>
+        </div>
+        <div id="ingredient-chips" style="min-height:32px;"></div>
+      </div>
+      <div class="card">
+        <div class="flex-between" style="margin-bottom:14px;">
+          <p class="card-title" style="margin:0">AI Meal Ideas</p>
+          <button class="btn btn-primary btn-sm" onclick="generateMeals()">✨ Generate Meals</button>
+        </div>
+        <div id="meal-ideas"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUDGET -->
+  <div id="page-budget" class="page">
+    <div class="page-header">
+      <div class="flex-between">
+        <div>
+          <h2>Budget</h2>
+          <p>Three buckets. Two views. Total clarity.</p>
+        </div>
+        <button class="btn btn-primary" onclick="openSpendModal()">+ Log Expense</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="flex-between">
+        <div>
+          <div class="card-title" style="margin-bottom:4px;">Monthly Take-Home</div>
+          <div id="income-display" style="font-family:var(--font-serif);font-size:28px;font-weight:500;color:var(--sage);">$4,028</div>
+          <div class="text-sm text-muted" style="margin-top:2px;" id="weekly-display">$931 / week</div>
+        </div>
+        <button class="btn btn-sm" onclick="openIncomeModal()">✏️ Edit Income</button>
+      </div>
+    </div>
+    <div class="section-tabs" style="margin-bottom:16px;">
+      <button class="tab active" onclick="switchBudgetView('monthly', this)">This Month</button>
+      <button class="tab" onclick="switchBudgetView('weekly', this)">This Week</button>
+    </div>
+    <div class="grid-3" style="margin-bottom:16px;">
+      <div class="stat-card">
+        <div class="stat-label" id="budget-period-label">Month Budget</div>
+        <div class="stat-value" style="color:var(--sage);" id="stat-period-total">$4,028</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label" id="budget-spent-label">Spent</div>
+        <div class="stat-value" id="stat-spent">$0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Remaining</div>
+        <div class="stat-value" id="stat-remaining">$4,028</div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="flex-between" style="margin-bottom:14px;">
+          <p class="card-title" style="margin:0">Budget Buckets</p>
+          <button class="btn btn-sm" onclick="openBudgetEditModal()">Edit Limits</button>
+        </div>
+        <div id="budget-categories"></div>
+      </div>
+      <div class="card">
+        <p class="card-title">Recent Expenses</p>
+        <div id="expense-list"></div>
+        <div class="empty-state" id="expense-empty">No expenses logged yet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTES -->
+  <div id="page-notes" class="page">
+    <div class="page-header">
+      <div class="flex-between">
+        <div>
+          <h2>Notes</h2>
+          <p>Jot anything down, organized into sections</p>
+        </div>
+        <button class="btn btn-primary" onclick="openNewSectionModal()">+ New Section</button>
+      </div>
+    </div>
+    <div id="notes-container"></div>
+  </div>
+
+  <!-- DEBT -->
+  <div id="page-debt" class="page">
+    <div class="page-header">
+      <div class="flex-between">
+        <div>
+          <h2>Debt Tracker</h2>
+          <p>Crush it. Watch those balances drop.</p>
+        </div>
+        <button class="btn btn-primary" onclick="openDebtModal()">+ Add Debt</button>
+      </div>
+    </div>
+    <div class="grid-3" style="margin-bottom:16px;">
+      <div class="stat-card">
+        <div class="stat-label">Total Debt</div>
+        <div class="stat-value" style="color:var(--coral);" id="total-debt-stat">$0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Paid Off</div>
+        <div class="stat-value" style="color:var(--sage);" id="total-paid-stat">$0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Debts Remaining</div>
+        <div class="stat-value" id="debt-count-stat">0</div>
+      </div>
+    </div>
+    <div id="debt-list-container">
+      <div class="empty-state card">Add your debts to start tracking progress</div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- Bottom nav — mobile only -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <button class="bottom-tab active" id="btab-calendar" onclick="showPage('calendar', this); setBottomTab('calendar')">
+      <span class="tab-icon">📅</span>
+      <span class="tab-label">Calendar</span>
+    </button>
+    <button class="bottom-tab" id="btab-todos" onclick="showPage('todos', this); setBottomTab('todos')">
+      <span class="tab-icon">✓</span>
+      <span class="tab-label">To-Dos</span>
+    </button>
+    <button class="bottom-tab" id="btab-notes" onclick="showPage('notes', this); setBottomTab('notes')">
+      <span class="tab-icon">📝</span>
+      <span class="tab-label">Notes</span>
+    </button>
+    <button class="bottom-tab" id="btab-mood" onclick="showPage('mood', this); setBottomTab('mood')">
+      <span class="tab-icon">🌙</span>
+      <span class="tab-label">Mood</span>
+    </button>
+    <button class="bottom-tab" id="btab-period" onclick="showPage('period', this); setBottomTab('period')">
+      <span class="tab-icon">🌸</span>
+      <span class="tab-label">Cycle</span>
+    </button>
+    <button class="bottom-tab" id="btab-grocery" onclick="showPage('grocery', this); setBottomTab('grocery')">
+      <span class="tab-icon">🛒</span>
+      <span class="tab-label">Grocery</span>
+    </button>
+    <button class="bottom-tab" id="btab-budget" onclick="showPage('budget', this); setBottomTab('budget')">
+      <span class="tab-icon">💵</span>
+      <span class="tab-label">Budget</span>
+    </button>
+    <button class="bottom-tab" id="btab-debt" onclick="showPage('debt', this); setBottomTab('debt')">
+      <span class="tab-icon">📉</span>
+      <span class="tab-label">Debt</span>
+    </button>
+  </div>
+</nav>
+
+<!-- Sync status pill -->
+<div class="sync-status saved" id="sync-status" style="display:none;">
+  <div class="sync-dot" id="sync-dot"></div>
+  <span id="sync-label">Saved</span>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="event-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Calendar Event</h3>
+      <button class="modal-close" onclick="closeModal('event-modal')">✕</button>
+    </div>
+    <div class="form-group"><label>Event Title</label><input type="text" id="ev-title" placeholder="e.g. Brunch with Sarah"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="ev-date"></div>
+      <div class="form-group"><label>Time (optional)</label><input type="time" id="ev-time"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Category</label>
+        <select id="ev-cat">
+          <option value="work">Work</option>
+          <option value="social">Social</option>
+          <option value="travel">Travel</option>
+          <option value="task">Task / Errand</option>
+          <option value="health">Health / Workout</option>
+          <option value="personal">Personal</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Remind me</label>
+        <select id="ev-reminder">
+          <option value="">No reminder</option>
+          <option value="0">At event time</option>
+          <option value="15">15 min before</option>
+          <option value="30">30 min before</option>
+          <option value="60">1 hour before</option>
+          <option value="1440">1 day before</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Notes (optional)</label><textarea id="ev-notes" placeholder="Details..."></textarea></div>
+    <button class="btn btn-primary" onclick="saveEvent()" style="width:100%;">Save Event</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="spend-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Log Expense</h3>
+      <button class="modal-close" onclick="closeModal('spend-modal')">✕</button>
+    </div>
+    <div class="form-group"><label>Description</label><input type="text" id="spend-desc" placeholder="e.g. Trader Joe's groceries"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Amount ($)</label><input type="number" id="spend-amount" placeholder="0.00" step="0.01"></div>
+      <div class="form-group"><label>Bucket</label>
+        <select id="spend-cat">
+          <option value="bills">Bills (rent, internet, energy)</option>
+          <option value="life">Life (groceries, transport, essentials)</option>
+          <option value="fun">Fun (going out, shopping)</option>
+          <option value="else">Everything Else</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Date</label><input type="date" id="spend-date"></div>
+    <button class="btn btn-primary" onclick="saveExpense()" style="width:100%;">Save Expense</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="budget-edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Edit Monthly Budget Limits</h3>
+      <button class="modal-close" onclick="closeModal('budget-edit-modal')">✕</button>
+    </div>
+    <p class="text-sm text-muted" style="margin-bottom:16px;">Monthly limits per bucket. Weekly limits are calculated automatically (÷ 4.33).</p>
+    <div class="form-group"><label>Bills — rent, internet, energy ($)</label><input type="number" id="limit-bills"></div>
+    <div class="form-group"><label>Life — groceries, transport, essentials ($)</label><input type="number" id="limit-life"></div>
+    <div class="form-group"><label>Fun — going out, shopping, entertainment ($)</label><input type="number" id="limit-fun"></div>
+    <div class="form-group"><label>Everything Else — debt payments, misc ($)</label><input type="number" id="limit-else"></div>
+    <button class="btn btn-primary" onclick="saveBudgetLimits()" style="width:100%; margin-top:6px;">Save</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="income-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Edit Income</h3>
+      <button class="modal-close" onclick="closeModal('income-modal')">✕</button>
+    </div>
+    <div class="form-group"><label>Monthly take-home pay ($)</label><input type="number" id="income-monthly" placeholder="4028"></div>
+    <div class="form-group"><label>Weekend job monthly income ($)</label><input type="number" id="income-extra" placeholder="600"></div>
+    <button class="btn btn-primary" onclick="saveIncome()" style="width:100%;">Save</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="notes-section-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>New Section</h3>
+      <button class="modal-close" onclick="closeModal('notes-section-modal')">✕</button>
+    </div>
+    <div class="form-group"><label>Section Name</label><input type="text" id="notes-section-name" placeholder="e.g. Work Ideas, Goals, Recipes..." onkeydown="if(event.key==='Enter') saveNewSection()"></div>
+    <button class="btn btn-primary" onclick="saveNewSection()" style="width:100%;">Create Section</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="debt-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Debt</h3>
+      <button class="modal-close" onclick="closeModal('debt-modal')">✕</button>
+    </div>
+    <div class="form-group"><label>Debt Name</label><input type="text" id="debt-name" placeholder="e.g. Chase Sapphire Card"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Original Balance ($)</label><input type="number" id="debt-original" placeholder="12000"></div>
+      <div class="form-group"><label>Current Balance ($)</label><input type="number" id="debt-current" placeholder="12000"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Interest Rate (%)</label><input type="number" id="debt-apr" placeholder="24.99" step="0.01"></div>
+      <div class="form-group"><label>Monthly Payment ($)</label><input type="number" id="debt-payment" placeholder="300"></div>
+    </div>
+    <button class="btn btn-primary" onclick="saveDebt()" style="width:100%;">Add Debt</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="debt-pay-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="debt-pay-title">Log Payment</h3>
+      <button class="modal-close" onclick="closeModal('debt-pay-modal')">✕</button>
+    </div>
+    <div class="form-group"><label>Payment Amount ($)</label><input type="number" id="debt-pay-amount" placeholder="300"></div>
+    <input type="hidden" id="debt-pay-id">
+    <button class="btn btn-primary" onclick="logDebtPayment()" style="width:100%;">Log Payment</button>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDDk2HrhJxL3JyZ2syrPvfiBIgLHL0bp-g",
+  authDomain: "life-os-fdd14.firebaseapp.com",
+  projectId: "life-os-fdd14",
+  storageBucket: "life-os-fdd14.firebasestorage.app",
+  messagingSenderId: "826906194057",
+  appId: "1:826906194057:web:5519ec016d579a19aed658"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const DOC_REF = doc(db, "lifeOS", "myData");
+
+// ===== DEFAULT STATE =====
+const defaultState = {
+  events: [],
+  todos: { short: [], long: [] },
+  notes: [],
+  period: { lastStart: null, cycleLength: 28, symptoms: {} },
+  grocery: { list: [], ingredients: [] },
+  budget: {
+    income: 4028,
+    extraIncome: 600,
+    limits: { bills: 2825, life: 500, fun: 400, else: 303 },
+    expenses: []
+  },
+  debts: [],
+  mood: {}  // keyed by date string "YYYY-MM-DD" → { emoji, energy, feelings[], note, phase, cycleDay }
+};
+
+window.state = JSON.parse(JSON.stringify(defaultState));
+
+// ===== SYNC STATUS =====
+function showSync(status, label) {
+  const el = document.getElementById('sync-status');
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  el.style.display = 'flex';
+  el.className = 'sync-status ' + status;
+  lbl.textContent = label;
+  dot.className = 'sync-dot' + (status === 'syncing' ? ' pulse' : '');
+}
+
+// ===== SAVE TO FIRESTORE =====
+let saveTimer = null;
+window.save = function() {
+  showSync('syncing', 'Saving...');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      await setDoc(DOC_REF, window.state);
+      showSync('saved', 'Saved ✓');
+      setTimeout(() => { document.getElementById('sync-status').style.display = 'none'; }, 2500);
+    } catch(e) {
+      showSync('error', 'Save failed');
+      console.error('Firestore save error:', e);
+    }
+  }, 600); // debounce — waits 600ms after last change
+};
+
+// ===== LOAD FROM FIRESTORE & START APP =====
+async function loadAndStart() {
+  try {
+    const snap = await getDoc(DOC_REF);
+    if (snap.exists()) {
+      const data = snap.data();
+      // Deep merge with defaults to handle new fields
+      window.state = {
+        ...defaultState,
+        ...data,
+        todos: { ...defaultState.todos, ...(data.todos || {}) },
+        period: { ...defaultState.period, ...(data.period || {}) },
+        grocery: { ...defaultState.grocery, ...(data.grocery || {}) },
+        budget: {
+          ...defaultState.budget,
+          ...(data.budget || {}),
+          limits: { ...defaultState.budget.limits, ...(data.budget?.limits || {}) }
+        },
+        mood: data.mood || {}
+      };
+    } else {
+      // First time — seed sample credit card debt
+      window.state.debts.push({
+        id: '1', name: 'Credit Card', original: 12000, current: 12000,
+        apr: 24.99, monthlyPayment: 300, payments: []
+      });
+      await setDoc(DOC_REF, window.state);
+    }
+  } catch(e) {
+    console.error('Failed to load from Firestore, using defaults:', e);
+  }
+
+  // Hide loading screen, show app
+  document.getElementById('app-loading').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'flex';
+
+  // Initial renders
+  renderCalendar();
+  renderPeriod();
+  renderGrocery();
+  renderBudget();
+  renderDebts();
+  renderNotes();
+  renderTodos();
+  renderMood();
+}
+
+loadAndStart();
+
+// ===== REAL-TIME LISTENER (syncs changes from other devices) =====
+// After initial load, listen for changes from other tabs/devices
+setTimeout(() => {
+  onSnapshot(DOC_REF, (snap) => {
+    if (snap.exists() && snap.metadata.hasPendingWrites === false) {
+      const data = snap.data();
+      window.state = {
+        ...defaultState,
+        ...data,
+        todos: { ...defaultState.todos, ...(data.todos || {}) },
+        period: { ...defaultState.period, ...(data.period || {}) },
+        grocery: { ...defaultState.grocery, ...(data.grocery || {}) },
+        budget: {
+          ...defaultState.budget,
+          ...(data.budget || {}),
+          limits: { ...defaultState.budget.limits, ...(data.budget?.limits || {}) }
+        },
+        mood: data.mood || {}
+      };
+      // Re-render the active page
+      const activePage = document.querySelector('.page.active');
+      if (activePage) {
+        const pageId = activePage.id.replace('page-', '');
+        if (pageId === 'calendar') renderCalendar();
+        else if (pageId === 'todos') renderTodos();
+        else if (pageId === 'notes') renderNotes();
+        else if (pageId === 'period') renderPeriod();
+        else if (pageId === 'grocery') renderGrocery();
+        else if (pageId === 'budget') renderBudget();
+        else if (pageId === 'debt') renderDebts();
+        else if (pageId === 'mood') renderMood();
+      }
+    }
+  });
+}, 2000);
+
+</script>
+
+<script>
+// ===== NAVIGATION =====
+function setBottomTab(id) {
+  document.querySelectorAll('.bottom-tab').forEach(t => t.classList.remove('active'));
+  const tab = document.getElementById('btab-' + id);
+  if (tab) tab.classList.add('active');
+}
+
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (el && el.classList.contains('nav-item')) el.classList.add('active');
+  setBottomTab(id);
+  if (id === 'calendar') renderCalendar();
+  if (id === 'todos') renderTodos();
+  if (id === 'notes') renderNotes();
+  if (id === 'period') renderPeriod();
+  if (id === 'grocery') renderGrocery();
+  if (id === 'budget') renderBudget();
+  if (id === 'debt') renderDebts();
+  if (id === 'mood') renderMood();
+}
+
+// ===== CALENDAR =====
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+
+function changeMonth(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-month-label').textContent = months[calMonth] + ' ' + calYear;
+  const grid = document.getElementById('cal-grid');
+  const headers = grid.querySelectorAll('.cal-header');
+  grid.innerHTML = '';
+  headers.forEach(h => grid.appendChild(h.cloneNode(true)));
+
+  const first = new Date(calYear, calMonth, 1).getDay();
+  const days = new Date(calYear, calMonth + 1, 0).getDate();
+  const today = new Date();
+
+  let periodDays = new Set();
+  if (window.state.period.lastStart) {
+    const start = new Date(window.state.period.lastStart);
+    for (let cycle = 0; cycle < 3; cycle++) {
+      const ps = new Date(start);
+      ps.setDate(ps.getDate() + cycle * window.state.period.cycleLength);
+      for (let d = 0; d < 5; d++) {
+        const pd = new Date(ps);
+        pd.setDate(pd.getDate() + d);
+        if (pd.getFullYear() === calYear && pd.getMonth() === calMonth)
+          periodDays.add(pd.getDate());
+      }
+    }
+  }
+
+  for (let i = 0; i < first; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-day other-month';
+    const prev = new Date(calYear, calMonth, 0 - first + i + 1);
+    cell.innerHTML = `<div class="cal-date">${prev.getDate()}</div>`;
+    grid.appendChild(cell);
+  }
+
+  for (let d = 1; d <= days; d++) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-day';
+    if (d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear())
+      cell.classList.add('today');
+    cell.innerHTML = `<div class="cal-date">${d}</div>`;
+
+    if (periodDays.has(d)) {
+      const dot = document.createElement('div');
+      dot.className = 'cal-dot period';
+      dot.textContent = '🌸 Period';
+      cell.appendChild(dot);
+    }
+
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayEvents = window.state.events.filter(e => e.date === dateStr);
+    dayEvents.forEach(ev => {
+      const dot = document.createElement('div');
+      dot.className = `cal-dot ${ev.category}`;
+      dot.textContent = ev.title;
+      cell.appendChild(dot);
+    });
+
+    cell.onclick = () => showDayEvents(dateStr, d);
+    grid.appendChild(cell);
+  }
+}
+
+function showDayEvents(dateStr, d) {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const panel = document.getElementById('day-events-panel');
+  const list = document.getElementById('day-events-list');
+  document.getElementById('day-events-title').textContent = months[calMonth] + ' ' + d + ', ' + calYear;
+  const evs = window.state.events.filter(e => e.date === dateStr);
+  if (evs.length === 0) {
+    list.innerHTML = `<div class="empty-state" style="padding:12px 0">No events — <a href="#" onclick="openEventModal('${dateStr}')">add one?</a></div>`;
+  } else {
+    list.innerHTML = evs.map(ev => `
+      <div class="todo-item">
+        <span class="tag tag-${ev.category}" style="flex-shrink:0">${ev.category}</span>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:500;">${ev.title}</div>
+          ${ev.time ? `<div class="text-sm text-muted">🕐 ${formatTime(ev.time)}${ev.reminder !== null && ev.reminder !== undefined ? ' · reminder set' : ''}</div>` : ''}
+          ${ev.notes ? `<div class="text-sm text-muted">${ev.notes}</div>` : ''}
+        </div>
+        <span class="todo-del" onclick="deleteEvent('${ev.id}')">✕</span>
+      </div>`).join('');
+  }
+  panel.style.display = 'block';
+}
+
+function openEventModal(date) {
+  document.getElementById('ev-date').value = date || new Date().toISOString().split('T')[0];
+  document.getElementById('ev-title').value = '';
+  document.getElementById('ev-notes').value = '';
+  document.getElementById('ev-time').value = '';
+  document.getElementById('ev-reminder').value = '';
+  openModal('event-modal');
+}
+
+function saveEvent() {
+  const title = document.getElementById('ev-title').value.trim();
+  const date = document.getElementById('ev-date').value;
+  if (!title || !date) return;
+  const time = document.getElementById('ev-time').value || null;
+  const reminder = document.getElementById('ev-reminder').value;
+  const ev = {
+    id: Date.now().toString(),
+    title, date,
+    time,
+    reminder: reminder !== '' ? parseInt(reminder) : null,
+    category: document.getElementById('ev-cat').value,
+    notes: document.getElementById('ev-notes').value
+  };
+  window.state.events.push(ev);
+  save();
+  closeModal('event-modal');
+  renderCalendar();
+  if (ev.time && ev.reminder !== null) scheduleNotification(ev);
+}
+
+function deleteEvent(id) {
+  window.state.events = window.state.events.filter(e => e.id !== id);
+  save(); renderCalendar();
+  document.getElementById('day-events-panel').style.display = 'none';
+}
+
+// ===== TO-DOs =====
+let todoTab = 'short';
+
+function switchTodoTab(tab, el) {
+  todoTab = tab;
+  document.querySelectorAll('#page-todos .section-tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('todo-tab-label').textContent = tab === 'short' ? "This Week's Tasks" : 'Long-Term Goals';
+  renderTodos();
+}
+
+function addTodo() {
+  const text = document.getElementById('todo-new-text').value.trim();
+  if (!text) return;
+  window.state.todos[todoTab].push({ id: Date.now().toString(), text, done: false, priority: document.getElementById('todo-priority').value });
+  document.getElementById('todo-new-text').value = '';
+  save(); renderTodos();
+}
+
+function toggleTodo(tab, id) {
+  const t = window.state.todos[tab].find(t => t.id === id);
+  if (t) t.done = !t.done;
+  save(); renderTodos();
+}
+
+function deleteTodo(tab, id) {
+  window.state.todos[tab] = window.state.todos[tab].filter(t => t.id !== id);
+  save(); renderTodos();
+}
+
+function renderTodos() {
+  const list = document.getElementById('todo-list');
+  const doneList = document.getElementById('todo-done-list');
+  const items = window.state.todos[todoTab];
+  const active = items.filter(t => !t.done);
+  const done = items.filter(t => t.done);
+
+  list.innerHTML = active.length ? active.map(t => `
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo('${todoTab}','${t.id}')"></div>
+      <div class="todo-text">${t.text}<span class="todo-priority priority-${t.priority}">${t.priority}</span></div>
+      <span class="todo-del" onclick="deleteTodo('${todoTab}','${t.id}')">✕</span>
+    </div>`).join('') : '<div class="empty-state" style="padding:12px 0">All clear! Add a task above.</div>';
+
+  const total = items.length;
+  const pct = total ? Math.round((done.length / total) * 100) : 0;
+  document.getElementById('todo-stats').innerHTML = `
+    <div class="flex-between mb-8"><span class="text-sm text-muted">${done.length} of ${total} completed</span><span style="font-size:13px;font-weight:500;">${pct}%</span></div>
+    <div class="budget-bar-wrap"><div class="budget-bar" style="width:${pct}%;background:var(--sage);"></div></div>`;
+
+  doneList.innerHTML = done.length ? done.map(t => `
+    <div class="todo-item">
+      <div class="todo-check checked" onclick="toggleTodo('${todoTab}','${t.id}')"></div>
+      <div class="todo-text done">${t.text}</div>
+      <span class="todo-del" onclick="deleteTodo('${todoTab}','${t.id}')">✕</span>
+    </div>`).join('') : '<div class="text-sm text-muted">Nothing done yet</div>';
+}
+
+// ===== PERIOD =====
+const symptoms = ['Cramps','Bloating','Headache','Fatigue','Mood swings','Back pain','Breast tenderness','Acne','Cravings','Nausea','Anxiety','Spotting'];
+const phaseInfo = [
+  { name: 'Menstrual', days: '1–5', color: 'var(--rose)', class: 'phase-period', tips: 'Rest and restore. Your body is working hard. Favor iron-rich foods like leafy greens, lentils, and lean red meat. Gentle yoga or walks are ideal. Be kind to yourself.' },
+  { name: 'Follicular', days: '6–13', color: 'var(--sage)', class: 'phase-follicular', tips: 'Energy rising! Great time to start new projects, have important conversations, and hit the gym hard. Estrogen peaks — you may feel more social and creative.' },
+  { name: 'Ovulation', days: '14–16', color: 'var(--amber)', class: 'phase-ovulation', tips: "Peak energy and confidence. You're at your most magnetic. Great for presentations, dates, or anything requiring charm and focus. Eat antioxidant-rich foods." },
+  { name: 'Luteal', days: '17–28', color: 'var(--indigo)', class: 'phase-luteal', tips: 'Progesterone rises. You may want more solitude and slower activities. Great for detail work. Cravings increase — magnesium-rich foods (dark chocolate, nuts) help PMS symptoms.' }
+];
+
+function savePeriodData() {
+  window.state.period.lastStart = document.getElementById('period-start-date').value;
+  window.state.period.cycleLength = parseInt(document.getElementById('cycle-length').value) || 28;
+  save(); renderPeriod(); renderCalendar();
+}
+
+function saveSymptoms() {
+  const today = new Date().toISOString().split('T')[0];
+  const active = [...document.querySelectorAll('.symptom-btn.active')].map(b => b.dataset.symptom);
+  window.state.period.symptoms[today] = active;
+  save();
+  alert('Symptoms saved for today!');
+}
+
+function renderPeriod() {
+  document.getElementById('symptom-date-label').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const today = new Date().toISOString().split('T')[0];
+  const todaySymptoms = window.state.period.symptoms[today] || [];
+  document.getElementById('symptom-grid').innerHTML = symptoms.map(s =>
+    `<div class="symptom-btn ${todaySymptoms.includes(s)?'active':''}" data-symptom="${s}" onclick="this.classList.toggle('active')">${s}</div>`
+  ).join('');
+
+  document.getElementById('phase-bar').innerHTML = phaseInfo.map((p, i) =>
+    `<div class="phase-seg ${p.class}" id="phase-seg-${i}">
+      <div style="font-weight:600;font-size:13px;">${p.name}</div>
+      <div style="font-size:10px;margin-top:2px;">Day ${p.days}</div>
+    </div>`
+  ).join('');
+
+  if (!window.state.period.lastStart) {
+    document.getElementById('period-prediction').innerHTML = '<div class="empty-state">Log your last period date to see predictions</div>';
+    return;
+  }
+
+  const start = new Date(window.state.period.lastStart);
+  const today2 = new Date();
+  const cycleDay = Math.floor((today2 - start) / (1000 * 60 * 60 * 24)) % window.state.period.cycleLength + 1;
+  const clampedDay = ((cycleDay - 1 + window.state.period.cycleLength) % window.state.period.cycleLength) + 1;
+
+  let phaseIdx = clampedDay <= 5 ? 0 : clampedDay <= 13 ? 1 : clampedDay <= 16 ? 2 : 3;
+  document.getElementById('cycle-day-num').textContent = clampedDay;
+  document.getElementById('phase-name').textContent = phaseInfo[phaseIdx].name + ' Phase';
+  document.getElementById('phase-desc').textContent = 'Day ' + clampedDay + ' of ' + window.state.period.cycleLength;
+  document.getElementById('phase-tips').textContent = phaseInfo[phaseIdx].tips;
+
+  const arc = document.getElementById('phase-arc');
+  arc.style.strokeDashoffset = 289 - (289 * clampedDay / window.state.period.cycleLength);
+  arc.style.stroke = phaseInfo[phaseIdx].color;
+
+  document.querySelectorAll('.phase-seg').forEach((s, i) => s.classList.toggle('current', i === phaseIdx));
+
+  let nextCycleStart = new Date(start);
+  while (nextCycleStart <= today2) nextCycleStart.setDate(nextCycleStart.getDate() + window.state.period.cycleLength);
+  const daysUntil = Math.ceil((nextCycleStart - today2) / (1000 * 60 * 60 * 24));
+  const nextOv = new Date(nextCycleStart);
+  nextOv.setDate(nextOv.getDate() + 14);
+
+  document.getElementById('period-prediction').innerHTML = `
+    <div style="margin-bottom:12px;">
+      <div class="stat-label">Next period in</div>
+      <div style="font-size:28px;font-family:var(--font-serif);color:var(--rose);font-weight:500;">${daysUntil} days</div>
+      <div class="text-sm text-muted">${nextCycleStart.toLocaleDateString('en-US',{month:'long',day:'numeric'})}</div>
+    </div>
+    <div>
+      <div class="stat-label">Expected ovulation</div>
+      <div style="font-size:16px;font-weight:500;">${nextOv.toLocaleDateString('en-US',{month:'long',day:'numeric'})}</div>
+    </div>`;
+
+  if (document.getElementById('period-start-date')) {
+    document.getElementById('period-start-date').value = window.state.period.lastStart || '';
+    document.getElementById('cycle-length').value = window.state.period.cycleLength;
+  }
+}
+
+// ===== GROCERY =====
+let groceryTab = 'list';
+
+function switchGroceryTab(tab, el) {
+  groceryTab = tab;
+  document.querySelectorAll('#page-grocery .section-tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('grocery-tab-list').style.display = tab === 'list' ? 'block' : 'none';
+  document.getElementById('grocery-tab-pantry').style.display = tab === 'pantry' ? 'block' : 'none';
+  renderGrocery();
+}
+
+function addGroceryItem() {
+  const text = document.getElementById('grocery-new').value.trim();
+  if (!text) return;
+  window.state.grocery.list.push({ id: Date.now().toString(), text, cat: document.getElementById('grocery-cat').value, done: false });
+  document.getElementById('grocery-new').value = '';
+  save(); renderGrocery();
+}
+
+function toggleGrocery(id) {
+  const item = window.state.grocery.list.find(i => i.id === id);
+  if (item) item.done = !item.done;
+  save(); renderGrocery();
+}
+
+function deleteGroceryItem(id) {
+  window.state.grocery.list = window.state.grocery.list.filter(i => i.id !== id);
+  save(); renderGrocery();
+}
+
+function clearCheckedGrocery() {
+  window.state.grocery.list = window.state.grocery.list.filter(i => !i.done);
+  save(); renderGrocery();
+}
+
+function addIngredient() {
+  const val = document.getElementById('ingredient-input').value.trim();
+  if (!val) return;
+  val.split(',').map(v => v.trim()).filter(Boolean).forEach(v => {
+    if (!window.state.grocery.ingredients.includes(v)) window.state.grocery.ingredients.push(v);
+  });
+  document.getElementById('ingredient-input').value = '';
+  save(); renderIngredients();
+}
+
+function removeIngredient(name) {
+  window.state.grocery.ingredients = window.state.grocery.ingredients.filter(i => i !== name);
+  save(); renderIngredients();
+}
+
+function renderIngredients() {
+  const el = document.getElementById('ingredient-chips');
+  if (!el) return;
+  el.innerHTML = window.state.grocery.ingredients.map(i =>
+    `<div class="ingredient-chip">${i}<button onclick="removeIngredient('${i}')">✕</button></div>`
+  ).join('') || '<span class="text-sm text-muted">No ingredients added yet</span>';
+}
+
+function renderGrocery() {
+  const catEmoji = { produce:'🥦', protein:'🥩', dairy:'🧀', pantry:'🫙', frozen:'❄️', snacks:'🍎', other:'📦' };
+  const list = document.getElementById('grocery-list');
+  if (list) {
+    const items = window.state.grocery.list;
+    list.innerHTML = items.length ? items.map(item =>
+      `<div class="grocery-item">
+        <div class="grocery-check ${item.done?'checked':''}" onclick="toggleGrocery('${item.id}')"></div>
+        <span style="font-size:14px;">${catEmoji[item.cat]||'📦'}</span>
+        <span class="grocery-text ${item.done?'done':''}" style="flex:1;">${item.text}</span>
+        <span class="todo-del" onclick="deleteGroceryItem('${item.id}')">✕</span>
+      </div>`
+    ).join('') : '<div class="empty-state">Your list is empty</div>';
+  }
+  renderIngredients();
+}
+
+async function generateMeals() {
+  const ingredients = window.state.grocery.ingredients;
+  if (ingredients.length === 0) {
+    document.getElementById('meal-ideas').innerHTML = '<div class="empty-state">Add some ingredients first!</div>';
+    return;
+  }
+  let phaseContext = '';
+  if (window.state.period.lastStart) {
+    const start = new Date(window.state.period.lastStart);
+    const today = new Date();
+    const cycleDay = Math.floor((today - start) / (1000 * 60 * 60 * 24)) % window.state.period.cycleLength + 1;
+    const clampedDay = ((cycleDay - 1 + window.state.period.cycleLength) % window.state.period.cycleLength) + 1;
+    let phase = clampedDay <= 5 ? 'menstrual (prioritize iron-rich, comforting foods)' :
+                clampedDay <= 13 ? 'follicular (light, energizing foods)' :
+                clampedDay <= 16 ? 'ovulation (antioxidant-rich foods)' : 'luteal (magnesium-rich, satisfying foods)';
+    phaseContext = ` The user is currently in their ${phase} phase, so tailor suggestions accordingly.`;
+  }
+  document.getElementById('meal-ideas').innerHTML = '<div class="loading"><div class="spinner"></div>Generating meal ideas just for you...</div>';
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: `I have these ingredients: ${ingredients.join(', ')}.${phaseContext} Suggest 3 meal ideas I can make. For each meal include: name, a one-sentence description, key nutritional benefit for my current phase, and approximate prep time. Return ONLY a JSON array with objects: {name, description, benefit, prepTime, phase}. No markdown, no extra text.` }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content.map(c => c.text || '').join('').replace(/```json|```/g,'').trim();
+    const meals = JSON.parse(text);
+    document.getElementById('meal-ideas').innerHTML = meals.map(m => `
+      <div class="meal-card">
+        <div class="meal-phase" style="background:var(--rose-light);color:var(--rose);">✨ ${m.phase || 'Cycle-synced'}</div>
+        <h4>${m.name}</h4>
+        <p>${m.description}</p>
+        <p style="margin-top:6px;"><strong style="color:var(--teal);">Benefit:</strong> ${m.benefit}</p>
+        <p class="text-muted" style="margin-top:4px;font-size:11.5px;">⏱ ${m.prepTime}</p>
+      </div>`).join('');
+  } catch(e) {
+    document.getElementById('meal-ideas').innerHTML = '<div class="empty-state">Could not generate meals. Please try again.</div>';
+  }
+}
+
+// ===== NOTES =====
+function openNewSectionModal() {
+  document.getElementById('notes-section-name').value = '';
+  openModal('notes-section-modal');
+}
+
+function saveNewSection() {
+  const name = document.getElementById('notes-section-name').value.trim();
+  if (!name) return;
+  window.state.notes.push({ id: Date.now().toString(), name, content: '', collapsed: false });
+  save(); closeModal('notes-section-modal'); renderNotes();
+}
+
+function deleteNoteSection(id) {
+  if (!confirm('Delete this section and all its notes?')) return;
+  window.state.notes = window.state.notes.filter(n => n.id !== id);
+  save(); renderNotes();
+}
+
+function toggleNoteSection(id) {
+  const sec = window.state.notes.find(n => n.id === id);
+  if (sec) sec.collapsed = !sec.collapsed;
+  save(); renderNotes();
+}
+
+function updateNoteContent(id, val) {
+  const sec = window.state.notes.find(n => n.id === id);
+  if (sec) { sec.content = val; save(); }
+}
+
+function renameSection(id) {
+  const sec = window.state.notes.find(n => n.id === id);
+  if (!sec) return;
+  const newName = prompt('Rename section:', sec.name);
+  if (newName && newName.trim()) { sec.name = newName.trim(); save(); renderNotes(); }
+}
+
+function renderNotes() {
+  const container = document.getElementById('notes-container');
+  if (!window.state.notes.length) {
+    container.innerHTML = `<div class="card" style="text-align:center;padding:48px 20px;">
+      <div style="font-size:32px;margin-bottom:12px;">📝</div>
+      <div style="font-size:15px;font-weight:500;margin-bottom:6px;">No sections yet</div>
+      <div class="text-muted text-sm" style="margin-bottom:16px;">Create sections to organize your notes — ideas, goals, work thoughts, anything.</div>
+      <button class="btn btn-primary" onclick="openNewSectionModal()">+ Create your first section</button>
+    </div>`;
+    return;
+  }
+  container.innerHTML = window.state.notes.map(sec => `
+    <div class="card" style="margin-bottom:12px;">
+      <div class="flex-between" style="margin-bottom:${sec.collapsed?'0':'14px'};">
+        <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toggleNoteSection('${sec.id}')">
+          <span style="font-size:12px;color:var(--text3);display:inline-block;transform:rotate(${sec.collapsed?'-90':'0'}deg);">▼</span>
+          <span style="font-size:15px;font-weight:500;">${sec.name}</span>
+          <span class="text-sm text-muted">${sec.content ? sec.content.split('\n').filter(l=>l.trim()).length + ' lines' : 'empty'}</span>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-sm" onclick="renameSection('${sec.id}')">Rename</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteNoteSection('${sec.id}')">Delete</button>
+        </div>
+      </div>
+      ${sec.collapsed ? '' : `<textarea
+        style="width:100%;min-height:160px;font-size:13.5px;line-height:1.7;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;background:var(--surface);color:var(--text);font-family:var(--font-sans);resize:vertical;"
+        placeholder="Start typing..."
+        oninput="updateNoteContent('${sec.id}', this.value)"
+      >${sec.content || ''}</textarea>`}
+    </div>
+  `).join('');
+}
+
+// ===== BUDGET =====
+let budgetView = 'monthly';
+
+function switchBudgetView(view, el) {
+  budgetView = view;
+  document.querySelectorAll('#page-budget .section-tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderBudget();
+}
+
+function openIncomeModal() {
+  document.getElementById('income-monthly').value = window.state.budget.income;
+  document.getElementById('income-extra').value = window.state.budget.extraIncome || 0;
+  openModal('income-modal');
+}
+
+function saveIncome() {
+  const m = parseFloat(document.getElementById('income-monthly').value);
+  const x = parseFloat(document.getElementById('income-extra').value) || 0;
+  if (!isNaN(m)) { window.state.budget.income = m; window.state.budget.extraIncome = x; }
+  save(); closeModal('income-modal'); renderBudget();
+}
+
+function openSpendModal() {
+  document.getElementById('spend-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('spend-desc').value = '';
+  document.getElementById('spend-amount').value = '';
+  openModal('spend-modal');
+}
+
+function saveExpense() {
+  const desc = document.getElementById('spend-desc').value.trim();
+  const amount = parseFloat(document.getElementById('spend-amount').value);
+  if (!desc || isNaN(amount)) return;
+  window.state.budget.expenses.push({ id: Date.now().toString(), desc, amount, cat: document.getElementById('spend-cat').value, date: document.getElementById('spend-date').value });
+  save(); closeModal('spend-modal'); renderBudget();
+}
+
+function openBudgetEditModal() {
+  document.getElementById('limit-bills').value = window.state.budget.limits.bills || 2825;
+  document.getElementById('limit-life').value = window.state.budget.limits.life;
+  document.getElementById('limit-fun').value = window.state.budget.limits.fun;
+  document.getElementById('limit-else').value = window.state.budget.limits.else;
+  openModal('budget-edit-modal');
+}
+
+function saveBudgetLimits() {
+  const bills = parseFloat(document.getElementById('limit-bills').value);
+  const life = parseFloat(document.getElementById('limit-life').value);
+  const fun = parseFloat(document.getElementById('limit-fun').value);
+  const els = parseFloat(document.getElementById('limit-else').value);
+  if (!isNaN(bills)) window.state.budget.limits.bills = bills;
+  if (!isNaN(life)) window.state.budget.limits.life = life;
+  if (!isNaN(fun)) window.state.budget.limits.fun = fun;
+  if (!isNaN(els)) window.state.budget.limits.else = els;
+  save(); closeModal('budget-edit-modal'); renderBudget();
+}
+
+function deleteExpense(id) {
+  window.state.budget.expenses = window.state.budget.expenses.filter(e => e.id !== id);
+  save(); renderBudget();
+}
+
+function renderBudget() {
+  const totalIncome = (window.state.budget.income || 0) + (window.state.budget.extraIncome || 0);
+  const weeklyIncome = totalIncome / 4.33;
+  document.getElementById('income-display').textContent = '$' + totalIncome.toLocaleString('en-US', {minimumFractionDigits:0});
+  document.getElementById('weekly-display').textContent = '$' + Math.round(weeklyIncome).toLocaleString() + ' / week';
+
+  const now = new Date();
+  let filterFn, periodTotal;
+  if (budgetView === 'monthly') {
+    const thisMonth = now.toISOString().slice(0, 7);
+    filterFn = e => e.date && e.date.startsWith(thisMonth);
+    periodTotal = totalIncome;
+    document.getElementById('budget-period-label').textContent = 'Month Budget';
+    document.getElementById('stat-period-total').textContent = '$' + periodTotal.toLocaleString('en-US', {minimumFractionDigits:0});
+  } else {
+    const day = now.getDay();
+    const monday = new Date(now); monday.setDate(now.getDate() - ((day + 6) % 7)); monday.setHours(0,0,0,0);
+    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); sunday.setHours(23,59,59,999);
+    filterFn = e => { if (!e.date) return false; const d = new Date(e.date); return d >= monday && d <= sunday; };
+    periodTotal = Math.round(weeklyIncome);
+    document.getElementById('budget-period-label').textContent = 'Week Budget';
+    document.getElementById('stat-period-total').textContent = '$' + periodTotal.toLocaleString('en-US', {minimumFractionDigits:0});
+  }
+
+  const periodExpenses = window.state.budget.expenses.filter(filterFn);
+  const totalSpent = periodExpenses.reduce((s, e) => s + e.amount, 0);
+  const remaining = periodTotal - totalSpent;
+
+  document.getElementById('stat-spent').textContent = '$' + totalSpent.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  document.getElementById('stat-remaining').textContent = '$' + Math.abs(remaining).toLocaleString('en-US', {minimumFractionDigits:0}) + (remaining < 0 ? ' over' : '');
+  document.getElementById('stat-remaining').style.color = remaining < 0 ? 'var(--coral)' : 'var(--sage)';
+
+  const buckets = [
+    { key: 'bills', label: 'Bills', desc: 'rent, internet, energy', color: 'var(--indigo)' },
+    { key: 'life', label: 'Life', desc: 'groceries, transport, essentials', color: 'var(--sage)' },
+    { key: 'fun', label: 'Fun', desc: 'going out, shopping, treats', color: 'var(--rose)' },
+    { key: 'else', label: 'Everything Else', desc: 'debt payments, misc', color: 'var(--teal)' }
+  ];
+  const divisor = budgetView === 'weekly' ? 4.33 : 1;
+  document.getElementById('budget-categories').innerHTML = buckets.map(b => {
+    const limit = Math.round(window.state.budget.limits[b.key] / divisor);
+    const spent = periodExpenses.filter(e => e.cat === b.key).reduce((s, e) => s + e.amount, 0);
+    const pct = Math.min(100, Math.round((spent / limit) * 100));
+    const over = spent > limit;
+    return `<div style="margin-bottom:18px;">
+      <div class="flex-between" style="margin-bottom:3px;">
+        <div><span style="font-size:14px;font-weight:500;">${b.label}</span><span class="text-sm text-muted" style="margin-left:6px;">${b.desc}</span></div>
+        <span style="font-size:12px;font-weight:500;color:${over?'var(--coral)':'var(--text2)'};">$${spent.toFixed(0)} / $${limit}</span>
+      </div>
+      <div class="budget-bar-wrap" style="height:10px;"><div class="budget-bar" style="width:${pct}%;background:${over?'var(--coral)':b.color};"></div></div>
+      ${over ? `<div style="font-size:11px;color:var(--coral);margin-top:3px;">$${(spent-limit).toFixed(0)} over budget</div>` : ''}
+    </div>`;
+  }).join('');
+
+  const expEl = document.getElementById('expense-list');
+  const expEmpty = document.getElementById('expense-empty');
+  const recent = [...window.state.budget.expenses].sort((a,b) => (b.date||'').localeCompare(a.date||'')).slice(0,12);
+  const bucketLabels = { bills: 'Bills', life: 'Life', fun: 'Fun', else: 'Everything Else' };
+  if (recent.length) {
+    expEmpty.style.display = 'none';
+    expEl.innerHTML = recent.map(e => `
+      <div class="todo-item">
+        <div style="flex:1;">
+          <div style="font-size:13.5px;font-weight:500;">${e.desc}</div>
+          <div class="text-sm text-muted">${bucketLabels[e.cat] || e.cat} · ${e.date}</div>
+        </div>
+        <div style="font-size:14px;font-weight:500;color:var(--coral);">-$${e.amount.toFixed(2)}</div>
+        <span class="todo-del" onclick="deleteExpense('${e.id}')">✕</span>
+      </div>`).join('');
+  } else {
+    expEmpty.style.display = 'block';
+    expEl.innerHTML = '';
+  }
+}
+
+// ===== DEBT =====
+function openDebtModal() {
+  ['debt-name','debt-original','debt-current','debt-apr','debt-payment'].forEach(id => document.getElementById(id).value = '');
+  openModal('debt-modal');
+}
+
+function saveDebt() {
+  const name = document.getElementById('debt-name').value.trim();
+  const original = parseFloat(document.getElementById('debt-original').value);
+  const current = parseFloat(document.getElementById('debt-current').value);
+  if (!name || isNaN(original) || isNaN(current)) return;
+  window.state.debts.push({
+    id: Date.now().toString(), name, original, current,
+    apr: parseFloat(document.getElementById('debt-apr').value) || 0,
+    monthlyPayment: parseFloat(document.getElementById('debt-payment').value) || 0,
+    payments: []
+  });
+  save(); closeModal('debt-modal'); renderDebts();
+}
+
+function openPayModal(id) {
+  const debt = window.state.debts.find(d => d.id === id);
+  if (!debt) return;
+  document.getElementById('debt-pay-title').textContent = 'Log Payment: ' + debt.name;
+  document.getElementById('debt-pay-id').value = id;
+  document.getElementById('debt-pay-amount').value = debt.monthlyPayment || '';
+  openModal('debt-pay-modal');
+}
+
+function logDebtPayment() {
+  const id = document.getElementById('debt-pay-id').value;
+  const amount = parseFloat(document.getElementById('debt-pay-amount').value);
+  if (!id || isNaN(amount)) return;
+  const debt = window.state.debts.find(d => d.id === id);
+  if (!debt) return;
+  debt.current = Math.max(0, debt.current - amount);
+  debt.payments.push({ amount, date: new Date().toISOString().split('T')[0] });
+  save(); closeModal('debt-pay-modal'); renderDebts();
+}
+
+function deleteDebt(id) {
+  if (!confirm('Remove this debt?')) return;
+  window.state.debts = window.state.debts.filter(d => d.id !== id);
+  save(); renderDebts();
+}
+
+function renderDebts() {
+  const container = document.getElementById('debt-list-container');
+  const totalDebt = window.state.debts.reduce((s, d) => s + d.current, 0);
+  const totalPaid = window.state.debts.reduce((s, d) => s + (d.original - d.current), 0);
+  document.getElementById('total-debt-stat').textContent = '$' + totalDebt.toLocaleString('en-US', {minimumFractionDigits:0});
+  document.getElementById('total-paid-stat').textContent = '$' + totalPaid.toLocaleString('en-US', {minimumFractionDigits:0});
+  document.getElementById('debt-count-stat').textContent = window.state.debts.filter(d => d.current > 0).length;
+
+  if (!window.state.debts.length) {
+    container.innerHTML = '<div class="empty-state card">Add your debts to start tracking progress</div>';
+    return;
+  }
+  container.innerHTML = window.state.debts.map(debt => {
+    const pct = Math.round(((debt.original - debt.current) / debt.original) * 100);
+    const monthsLeft = debt.monthlyPayment > 0 ? Math.ceil(debt.current / debt.monthlyPayment) : '—';
+    return `<div class="card" style="margin-bottom:12px;">
+      <div class="flex-between" style="margin-bottom:4px;">
+        <div class="debt-name">${debt.name}</div>
+        <div class="flex gap-8">
+          <button class="btn btn-sm btn-primary" onclick="openPayModal('${debt.id}')">Log Payment</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteDebt('${debt.id}')">Remove</button>
+        </div>
+      </div>
+      <div class="flex gap-12" style="margin-bottom:10px;align-items:baseline;">
+        <div class="debt-amount">$${debt.current.toLocaleString('en-US', {minimumFractionDigits:0})}</div>
+        <div class="text-sm text-muted">remaining of $${debt.original.toLocaleString()}</div>
+        ${debt.apr ? `<div class="pill" style="background:var(--coral-light);color:var(--coral);margin-left:auto;">${debt.apr}% APR</div>` : ''}
+      </div>
+      <div class="budget-bar-wrap" style="height:10px;margin-bottom:6px;">
+        <div class="budget-bar" style="width:${pct}%;background:var(--sage);"></div>
+      </div>
+      <div class="flex-between">
+        <span class="text-sm text-muted">${pct}% paid off · ${debt.payments.length} payments made</span>
+        <span class="text-sm text-muted">${typeof monthsLeft === 'number' ? monthsLeft + ' months left' : ''}</span>
+      </div>
+      ${debt.payments.length ? `<div class="text-sm text-muted" style="margin-top:6px;">Last payment: $${debt.payments[debt.payments.length-1].amount} on ${debt.payments[debt.payments.length-1].date}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ===== MOOD LOG =====
+const MOOD_EMOJIS = [
+  { emoji: '😄', label: 'Great' },
+  { emoji: '🙂', label: 'Good' },
+  { emoji: '😐', label: 'Meh' },
+  { emoji: '😔', label: 'Low' },
+  { emoji: '😢', label: 'Sad' },
+  { emoji: '😤', label: 'Angry' },
+  { emoji: '😰', label: 'Anxious' },
+  { emoji: '🤩', label: 'Excited' },
+];
+const ENERGY_LEVELS = ['⚡ High', '🔆 Medium', '🌿 Low', '😴 Drained'];
+const FEELINGS = ['Calm','Focused','Creative','Grateful','Overwhelmed','Irritable','Confident','Lonely','Motivated','Scattered','Tender','Restless','Content','Hopeful','Drained','Sensual'];
+
+const PHASE_EMOJIS = { menstrual: '🩸', follicular: '🌱', ovulation: '✨', luteal: '🌙' };
+
+function getCyclePhaseForDate(dateStr) {
+  if (!window.state.period.lastStart) return null;
+  const start = new Date(window.state.period.lastStart);
+  const target = new Date(dateStr);
+  const diff = Math.floor((target - start) / (1000 * 60 * 60 * 24));
+  const cycleLen = window.state.period.cycleLength;
+  const dayInCycle = ((diff % cycleLen) + cycleLen) % cycleLen + 1;
+  if (dayInCycle <= 5) return { phase: 'menstrual', name: 'Menstrual', day: dayInCycle, color: 'var(--rose)' };
+  if (dayInCycle <= 13) return { phase: 'follicular', name: 'Follicular', day: dayInCycle, color: 'var(--sage)' };
+  if (dayInCycle <= 16) return { phase: 'ovulation', name: 'Ovulation', day: dayInCycle, color: 'var(--amber)' };
+  return { phase: 'luteal', name: 'Luteal', day: dayInCycle, color: 'var(--indigo)' };
+}
+
+let selectedMoodEmoji = null;
+let selectedEnergy = null;
+let selectedFeelings = new Set();
+
+function renderMood() {
+  const today = new Date().toISOString().split('T')[0];
+  const todayEntry = window.state.mood[today] || {};
+  const phaseInfo = getCyclePhaseForDate(today);
+
+  // Restore today's saved selections
+  selectedMoodEmoji = todayEntry.emoji || null;
+  selectedEnergy = todayEntry.energy || null;
+  selectedFeelings = new Set(todayEntry.feelings || []);
+
+  // Phase label
+  const phaseEl = document.getElementById('mood-today-phase');
+  if (phaseEl) {
+    phaseEl.textContent = phaseInfo
+      ? `${PHASE_EMOJIS[phaseInfo.phase]} ${phaseInfo.name} phase · Day ${phaseInfo.day}`
+      : '';
+    phaseEl.style.color = phaseInfo?.color || 'var(--text2)';
+  }
+
+  // Emoji grid
+  const emojiGrid = document.getElementById('mood-emoji-grid');
+  if (emojiGrid) {
+    emojiGrid.innerHTML = MOOD_EMOJIS.map(m => `
+      <button class="mood-emoji-btn ${selectedMoodEmoji === m.emoji ? 'selected' : ''}"
+        onclick="selectMoodEmoji('${m.emoji}', this)">
+        ${m.emoji}<span class="mood-label">${m.label}</span>
+      </button>`).join('');
+  }
+
+  // Energy grid
+  const energyGrid = document.getElementById('mood-energy-grid');
+  if (energyGrid) {
+    energyGrid.innerHTML = ENERGY_LEVELS.map(e => `
+      <button class="energy-btn ${selectedEnergy === e ? 'selected' : ''}"
+        onclick="selectEnergy('${e}', this)">${e}</button>`).join('');
+  }
+
+  // Feelings grid
+  const feelingsGrid = document.getElementById('mood-feelings-grid');
+  if (feelingsGrid) {
+    feelingsGrid.innerHTML = FEELINGS.map(f => `
+      <div class="feeling-chip ${selectedFeelings.has(f) ? 'selected' : ''}"
+        onclick="toggleFeeling('${f}', this)">${f}</div>`).join('');
+  }
+
+  // Note
+  const noteEl = document.getElementById('mood-note');
+  if (noteEl) noteEl.value = todayEntry.note || '';
+
+  // Cycle map
+  renderMoodCycleMap();
+
+  // Phase patterns
+  renderMoodPhasePatterns();
+
+  // History
+  renderMoodHistory();
+
+  // Streak
+  renderMoodStreak();
+}
+
+function selectMoodEmoji(emoji, btn) {
+  selectedMoodEmoji = selectedMoodEmoji === emoji ? null : emoji;
+  document.querySelectorAll('.mood-emoji-btn').forEach(b => b.classList.remove('selected'));
+  if (selectedMoodEmoji) btn.classList.add('selected');
+}
+
+function selectEnergy(level, btn) {
+  selectedEnergy = selectedEnergy === level ? null : level;
+  document.querySelectorAll('.energy-btn').forEach(b => b.classList.remove('selected'));
+  if (selectedEnergy) btn.classList.add('selected');
+}
+
+function toggleFeeling(feeling, el) {
+  if (selectedFeelings.has(feeling)) {
+    selectedFeelings.delete(feeling);
+    el.classList.remove('selected');
+  } else {
+    selectedFeelings.add(feeling);
+    el.classList.add('selected');
+  }
+}
+
+function saveMoodEntry() {
+  if (!selectedMoodEmoji) { alert('Pick a mood emoji first!'); return; }
+  const today = new Date().toISOString().split('T')[0];
+  const phaseInfo = getCyclePhaseForDate(today);
+  window.state.mood[today] = {
+    emoji: selectedMoodEmoji,
+    energy: selectedEnergy,
+    feelings: [...selectedFeelings],
+    note: document.getElementById('mood-note').value.trim(),
+    phase: phaseInfo?.phase || null,
+    cycleDay: phaseInfo?.day || null,
+    savedAt: new Date().toISOString()
+  };
+  save();
+  renderMood();
+  // Brief confirmation
+  const btn = document.querySelector('#page-mood .btn-primary');
+  if (btn) { btn.textContent = '✓ Saved!'; setTimeout(() => { btn.textContent = "Save Today's Entry"; }, 1500); }
+}
+
+function renderMoodCycleMap() {
+  const el = document.getElementById('mood-cycle-map');
+  if (!el) return;
+  if (!window.state.period.lastStart) {
+    el.innerHTML = '<div class="empty-state" style="padding:16px 0;">Log your period date in Cycle Tracker to see your cycle map</div>';
+    return;
+  }
+
+  // Get current cycle start
+  const start = new Date(window.state.period.lastStart);
+  const today = new Date();
+  let cycleStart = new Date(start);
+  while (new Date(cycleStart.getTime() + window.state.period.cycleLength * 86400000) <= today) {
+    cycleStart.setDate(cycleStart.getDate() + window.state.period.cycleLength);
+  }
+  // Go back one cycle if needed
+  if (cycleStart > today) cycleStart.setDate(cycleStart.getDate() - window.state.period.cycleLength);
+
+  const dots = [];
+  for (let d = 0; d < window.state.period.cycleLength; d++) {
+    const date = new Date(cycleStart);
+    date.setDate(date.getDate() + d);
+    if (date > today) break;
+    const dateStr = date.toISOString().split('T')[0];
+    const entry = window.state.mood[dateStr];
+    const phaseInfo = getCyclePhaseForDate(dateStr);
+    const isToday = dateStr === today.toISOString().split('T')[0];
+    dots.push(`
+      <div class="mood-day-dot"
+        style="background:${phaseInfo ? phaseInfo.color + '22' : 'var(--surface2)'};
+               border-color:${isToday ? 'var(--accent)' : 'transparent'};"
+        title="Day ${d+1} · ${dateStr}${entry ? ' · ' + entry.emoji : ''}">
+        ${entry ? entry.emoji : '<span style="font-size:10px;color:var(--text3);">' + (d+1) + '</span>'}
+      </div>`);
+  }
+
+  el.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">${dots.join('')}</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;">
+      <span class="text-sm text-muted">🩸 Menstrual</span>
+      <span class="text-sm text-muted">🌱 Follicular</span>
+      <span class="text-sm text-muted">✨ Ovulation</span>
+      <span class="text-sm text-muted">🌙 Luteal</span>
+    </div>`;
+}
+
+function renderMoodPhasePatterns() {
+  const el = document.getElementById('mood-phase-patterns');
+  if (!el) return;
+  const phases = ['menstrual', 'follicular', 'ovulation', 'luteal'];
+  const phaseNames = { menstrual: 'Menstrual', follicular: 'Follicular', ovulation: 'Ovulation', luteal: 'Luteal' };
+  const phaseColors = { menstrual: 'var(--rose)', follicular: 'var(--sage)', ovulation: 'var(--amber)', luteal: 'var(--indigo)' };
+
+  const entries = Object.values(window.state.mood).filter(e => e.phase);
+  if (!entries.length) {
+    el.innerHTML = '<div class="empty-state" style="padding:16px 0;">Patterns appear after a few days of logging</div>';
+    return;
+  }
+
+  el.innerHTML = phases.map(phase => {
+    const phaseEntries = entries.filter(e => e.phase === phase);
+    if (!phaseEntries.length) return '';
+    const emojis = phaseEntries.slice(-5).map(e => e.emoji).join(' ');
+    return `<div class="phase-pattern-bar">
+      <span class="phase-pattern-label" style="color:${phaseColors[phase]};font-weight:500;">${phaseNames[phase]}</span>
+      <span class="phase-pattern-emojis">${emojis}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderMoodHistory() {
+  const el = document.getElementById('mood-history');
+  if (!el) return;
+  const entries = Object.entries(window.state.mood)
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .slice(0, 14);
+
+  if (!entries.length) {
+    el.innerHTML = '<div class="empty-state">No entries yet — log today\'s mood above!</div>';
+    return;
+  }
+
+  el.innerHTML = entries.map(([date, entry]) => {
+    const phaseInfo = getCyclePhaseForDate(date);
+    const d = new Date(date);
+    const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    return `<div class="mood-history-item">
+      <div class="flex-between" style="margin-bottom:4px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:22px;">${entry.emoji}</span>
+          <div>
+            <span style="font-size:13px;font-weight:500;">${label}</span>
+            ${phaseInfo ? `<span class="text-sm text-muted" style="margin-left:6px;color:${phaseInfo.color}">${PHASE_EMOJIS[phaseInfo.phase]} ${phaseInfo.name}</span>` : ''}
+          </div>
+        </div>
+        ${entry.energy ? `<span style="font-size:11px;color:var(--text3);">${entry.energy}</span>` : ''}
+      </div>
+      ${entry.feelings?.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
+        ${entry.feelings.map(f => `<span style="font-size:11px;padding:2px 8px;background:var(--indigo-light);color:var(--indigo);border-radius:10px;">${f}</span>`).join('')}
+      </div>` : ''}
+      ${entry.note ? `<div class="text-sm text-muted" style="font-style:italic;">"${entry.note}"</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderMoodStreak() {
+  const el = document.getElementById('mood-streak');
+  if (!el) return;
+  let streak = 0;
+  const today = new Date();
+  for (let i = 0; i < 60; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    if (window.state.mood[dateStr]) streak++;
+    else if (i > 0) break;
+  }
+  el.textContent = streak > 1 ? `🔥 ${streak} day streak` : streak === 1 ? '✨ Logged today' : '';
+}
+
+// ===== NOTIFICATIONS =====
+
+function formatTime(t) {
+  if (!t) return '';
+  const [h, m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+async function requestNotificationPermission() {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied') return false;
+  const result = await Notification.requestPermission();
+  return result === 'granted';
+}
+
+function scheduleNotification(ev) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (!ev.time || ev.reminder === null || ev.reminder === undefined) return;
+
+  const [h, m] = ev.time.split(':').map(Number);
+  const eventDate = new Date(ev.date + 'T' + ev.time);
+  const fireAt = new Date(eventDate.getTime() - ev.reminder * 60000);
+  const now = new Date();
+  const msUntil = fireAt - now;
+
+  if (msUntil <= 0) return; // already passed
+
+  // Store timeout id in sessionStorage so we know it's scheduled
+  const key = 'notif_' + ev.id;
+  sessionStorage.setItem(key, '1');
+
+  setTimeout(() => {
+    const label = ev.reminder === 0 ? 'Now' :
+                  ev.reminder === 1440 ? '1 day until' :
+                  ev.reminder >= 60 ? `${ev.reminder/60}h until` :
+                  `${ev.reminder}min until`;
+    new Notification(`${label}: ${ev.title}`, {
+      body: ev.notes || `${formatTime(ev.time)} · ${ev.category}`,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: ev.id
+    });
+    sessionStorage.removeItem(key);
+  }, msUntil);
+}
+
+function rescheduleAllNotifications() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const now = new Date();
+  window.state.events.forEach(ev => {
+    if (!ev.time || ev.reminder === null || ev.reminder === undefined) return;
+    const eventDate = new Date(ev.date + 'T' + ev.time);
+    const fireAt = new Date(eventDate.getTime() - ev.reminder * 60000);
+    if (fireAt > now) scheduleNotification(ev);
+  });
+}
+
+// Notification permission banner — shown in calendar page header
+function renderNotifBanner() {
+  const existing = document.getElementById('notif-banner');
+  if (existing) existing.remove();
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') {
+    rescheduleAllNotifications();
+    return;
+  }
+  if (Notification.permission === 'denied') return;
+
+  const banner = document.createElement('div');
+  banner.id = 'notif-banner';
+  banner.style.cssText = `
+    background: var(--amber-light); border: 1px solid var(--amber); border-radius: var(--radius-sm);
+    padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center;
+    justify-content: space-between; gap: 12px; font-size: 13px; color: var(--text);
+  `;
+  banner.innerHTML = `
+    <span>🔔 <strong>Enable reminders</strong> to get notified before your events — even when the app is in the background.</span>
+    <div style="display:flex;gap:8px;flex-shrink:0;">
+      <button class="btn btn-sm btn-primary" onclick="enableNotifications()">Enable</button>
+      <button class="btn btn-sm" onclick="document.getElementById('notif-banner').remove()">Not now</button>
+    </div>
+  `;
+  const header = document.querySelector('#page-calendar .page-header');
+  if (header) header.insertAdjacentElement('afterend', banner);
+}
+
+async function enableNotifications() {
+  const granted = await requestNotificationPermission();
+  const banner = document.getElementById('notif-banner');
+  if (granted) {
+    if (banner) banner.remove();
+    rescheduleAllNotifications();
+    // Show a test notification
+    new Notification('Life OS reminders enabled! 🎉', {
+      body: "You'll be notified before your events.",
+      tag: 'test'
+    });
+  } else {
+    if (banner) banner.innerHTML = `<span>❌ Notifications blocked. To fix: go to <strong>Settings → Safari → Life OS</strong> and allow notifications.</span>`;
+  }
+}
+
+// Kick off on load
+setTimeout(() => {
+  renderNotifBanner();
+}, 2500); // wait for Firebase load
+
+// ===== MODAL UTILS =====
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ===== SERVICE WORKER =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(() => console.log('Life OS: service worker registered'))
+      .catch(e => console.log('SW registration failed:', e));
+  });
+}
+
+// ===== PWA INSTALL PROMPT =====
+// Show "Add to Home Screen" nudge on first visit if not already installed
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  showInstallBanner();
+});
+
+function showInstallBanner() {
+  // Don't show if already dismissed or installed
+  if (localStorage.getItem('pwaInstallDismissed')) return;
+  if (window.matchMedia('(display-mode: standalone)').matches) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'install-banner';
+  banner.style.cssText = `
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: white; border-radius: var(--radius);
+    padding: 14px 18px; display: flex; align-items: center; gap: 12px;
+    font-size: 13px; box-shadow: var(--shadow-md); z-index: 9000;
+    max-width: 340px; width: calc(100% - 40px);
+  `;
+  banner.innerHTML = `
+    <span>📲 Install <strong>Life OS</strong> as an app on your device</span>
+    <div style="display:flex;gap:6px;flex-shrink:0;">
+      <button onclick="installPWA()" style="background:var(--accent);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:500;cursor:pointer;">Install</button>
+      <button onclick="dismissInstall()" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;">✕</button>
+    </div>
+  `;
+  document.body.appendChild(banner);
+}
+
+async function installPWA() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  if (outcome === 'accepted') {
+    document.getElementById('install-banner')?.remove();
+    localStorage.setItem('pwaInstallDismissed', '1');
+  }
+  deferredInstallPrompt = null;
+}
+
+function dismissInstall() {
+  document.getElementById('install-banner')?.remove();
+  localStorage.setItem('pwaInstallDismissed', '1');
+}
+
+// iOS doesn't support beforeinstallprompt — show manual instructions instead
+setTimeout(() => {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const dismissed = localStorage.getItem('pwaInstallDismissed');
+  if (isIOS && !isStandalone && !dismissed) {
+    const banner = document.createElement('div');
+    banner.id = 'install-banner';
+    banner.style.cssText = `
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: var(--text); color: white; border-radius: var(--radius);
+      padding: 14px 18px; font-size: 13px; box-shadow: var(--shadow-md);
+      z-index: 9000; max-width: 340px; width: calc(100% - 40px); line-height: 1.6;
+    `;
+    banner.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+        <div>📲 <strong>Install Life OS</strong> as an app:<br>
+        Tap <strong>Share</strong> <span style="font-size:15px;">⎙</span> then <strong>"Add to Home Screen"</strong></div>
+        <button onclick="dismissInstall()" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:6px;padding:4px 8px;font-size:14px;cursor:pointer;flex-shrink:0;">✕</button>
+      </div>
+    `;
+    document.body.appendChild(banner);
+    // Auto-hide after 8 seconds
+    setTimeout(() => banner?.remove(), 8000);
+  }
+}, 3000);
+</script>
+</body>
+</html>
