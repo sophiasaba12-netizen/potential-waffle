@@ -2,8 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Life OS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Life OS</title>
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#C4956A">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- iOS specific -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Life OS">
+<link rel="apple-touch-icon" href="https://api.dicebear.com/7.x/shapes/svg?seed=lifeos&backgroundColor=C4956A">
+
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -1662,6 +1674,91 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 document.querySelectorAll('.modal-overlay').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
 });
+
+// ===== SERVICE WORKER =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(() => console.log('Life OS: service worker registered'))
+      .catch(e => console.log('SW registration failed:', e));
+  });
+}
+
+// ===== PWA INSTALL PROMPT =====
+// Show "Add to Home Screen" nudge on first visit if not already installed
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  showInstallBanner();
+});
+
+function showInstallBanner() {
+  // Don't show if already dismissed or installed
+  if (localStorage.getItem('pwaInstallDismissed')) return;
+  if (window.matchMedia('(display-mode: standalone)').matches) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'install-banner';
+  banner.style.cssText = `
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: white; border-radius: var(--radius);
+    padding: 14px 18px; display: flex; align-items: center; gap: 12px;
+    font-size: 13px; box-shadow: var(--shadow-md); z-index: 9000;
+    max-width: 340px; width: calc(100% - 40px);
+  `;
+  banner.innerHTML = `
+    <span>📲 Install <strong>Life OS</strong> as an app on your device</span>
+    <div style="display:flex;gap:6px;flex-shrink:0;">
+      <button onclick="installPWA()" style="background:var(--accent);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:500;cursor:pointer;">Install</button>
+      <button onclick="dismissInstall()" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;">✕</button>
+    </div>
+  `;
+  document.body.appendChild(banner);
+}
+
+async function installPWA() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  if (outcome === 'accepted') {
+    document.getElementById('install-banner')?.remove();
+    localStorage.setItem('pwaInstallDismissed', '1');
+  }
+  deferredInstallPrompt = null;
+}
+
+function dismissInstall() {
+  document.getElementById('install-banner')?.remove();
+  localStorage.setItem('pwaInstallDismissed', '1');
+}
+
+// iOS doesn't support beforeinstallprompt — show manual instructions instead
+setTimeout(() => {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const dismissed = localStorage.getItem('pwaInstallDismissed');
+  if (isIOS && !isStandalone && !dismissed) {
+    const banner = document.createElement('div');
+    banner.id = 'install-banner';
+    banner.style.cssText = `
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: var(--text); color: white; border-radius: var(--radius);
+      padding: 14px 18px; font-size: 13px; box-shadow: var(--shadow-md);
+      z-index: 9000; max-width: 340px; width: calc(100% - 40px); line-height: 1.6;
+    `;
+    banner.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+        <div>📲 <strong>Install Life OS</strong> as an app:<br>
+        Tap <strong>Share</strong> <span style="font-size:15px;">⎙</span> then <strong>"Add to Home Screen"</strong></div>
+        <button onclick="dismissInstall()" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:6px;padding:4px 8px;font-size:14px;cursor:pointer;flex-shrink:0;">✕</button>
+      </div>
+    `;
+    document.body.appendChild(banner);
+    // Auto-hide after 8 seconds
+    setTimeout(() => banner?.remove(), 8000);
+  }
+}, 3000);
 </script>
 </body>
 </html>
