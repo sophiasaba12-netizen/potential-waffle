@@ -237,17 +237,17 @@
   .phase-pattern-label { font-size: 12px; color: var(--text2); width: 80px; flex-shrink: 0; }
   .phase-pattern-emojis { font-size: 16px; letter-spacing: 2px; }
 
-  @media (max-width: 768px) {
-    /* Hide sidebar entirely on mobile */
+  @media (max-width: 1024px) {
+    /* Hide sidebar entirely on mobile/tablet */
     .sidebar { display: none; }
     /* Main takes full width, with padding at bottom for tab bar */
     .main { margin-left: 0; padding: 20px 16px 90px; }
     .grid-2, .grid-3 { grid-template-columns: 1fr; }
   }
 
-  /* Bottom tab bar — mobile only */
+  /* Bottom tab bar */
   .bottom-nav {
-    display: none;
+    display: block; /* always on by default */
     position: fixed;
     bottom: 0; left: 0; right: 0;
     background: var(--surface);
@@ -282,8 +282,10 @@
   .bottom-tab.active { color: var(--accent); }
   .bottom-tab .tab-icon { font-size: 20px; line-height: 1; }
   .bottom-tab .tab-label { font-size: 10px; font-weight: 500; white-space: nowrap; }
-  @media (max-width: 768px) {
-    .bottom-nav { display: block; }
+  /* Hide bottom nav on large screens where sidebar is visible */
+  @media (min-width: 1025px) {
+    .bottom-nav { display: none; }
+    .main { padding-bottom: 32px; }
   }
 </style>
 </head>
