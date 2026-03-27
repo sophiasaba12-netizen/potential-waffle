@@ -245,7 +245,114 @@
     .grid-2, .grid-3 { grid-template-columns: 1fr; }
   }
 
-  /* Bottom tab bar */
+  /* Show/hide by screen size */
+  .desktop-only { display: block; }
+  .mobile-only { display: none; }
+  @media (max-width: 1024px) {
+    .desktop-only { display: none !important; }
+    .mobile-only { display: block; }
+  }
+
+  /* Mobile calendar */
+  .mobile-cal-month { margin-bottom: 24px; }
+  .mobile-cal-month-label {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 10px;
+    padding: 0 2px;
+    color: var(--text);
+  }
+  .mobile-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0;
+    width: 100%;
+  }
+  .mobile-cal-header {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    padding: 6px 0;
+    letter-spacing: 0.5px;
+  }
+  .mobile-cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 4px 2px 2px;
+    cursor: pointer;
+    border-radius: 8px;
+    position: relative;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.1s;
+  }
+  .mobile-cal-day:active { background: var(--surface2); }
+  .mobile-cal-day.today .mobile-cal-date {
+    background: var(--accent);
+    color: white;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mobile-cal-day.other-month .mobile-cal-date { color: var(--text3); }
+  .mobile-cal-date {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 26px;
+    width: 26px;
+    height: 26px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .mobile-cal-dots {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px;
+    margin-top: 2px;
+    width: 100%;
+  }
+  .mobile-cal-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Day events modal on mobile */
+  .day-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 500;
+    align-items: flex-end;
+  }
+  .day-modal-overlay.open { display: flex; }
+  .day-modal {
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .day-modal-handle {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
   .bottom-nav {
     display: block; /* always on by default */
     position: fixed;
@@ -339,13 +446,14 @@
 
   <!-- CALENDAR -->
   <div id="page-calendar" class="page active">
-    <div class="page-header">
+    <div class="page-header" id="cal-page-header">
       <div class="flex-between">
         <div>
           <h2>Calendar</h2>
-          <p>Your schedule, color-coded by life area</p>
+          <p>Tap any day to view or add events</p>
         </div>
-        <button class="btn btn-primary" onclick="openEventModal()">+ Add Event</button>
+        <!-- Desktop add button only -->
+        <button class="btn btn-primary desktop-only" onclick="openEventModal()">+ Add Event</button>
       </div>
     </div>
     <div class="legend">
@@ -356,7 +464,9 @@
       <div class="legend-item"><div class="legend-dot" style="background:var(--sage)"></div> Health</div>
       <div class="legend-item"><div class="legend-dot" style="background:var(--rose)"></div> Period</div>
     </div>
-    <div class="card">
+
+    <!-- Desktop: single month with prev/next -->
+    <div class="card desktop-only">
       <div class="cal-nav">
         <button class="btn btn-sm" onclick="changeMonth(-1)">← Prev</button>
         <h3 id="cal-month-label"></h3>
@@ -369,6 +479,12 @@
         <div class="cal-header">Sat</div>
       </div>
     </div>
+
+    <!-- Mobile: scrollable months -->
+    <div class="mobile-only" id="cal-scroll-container">
+      <!-- months rendered by JS -->
+    </div>
+
     <div id="day-events-panel" style="display:none; margin-top:16px;">
       <div class="card">
         <div class="flex-between mb-8">
@@ -422,54 +538,108 @@
   <div id="page-period" class="page">
     <div class="page-header">
       <h2>Cycle Tracker</h2>
-      <p>Track your cycle, symptoms, and get predictions</p>
+      <p>Track your cycle, symptoms, and get personalised insights</p>
     </div>
-    <div class="grid-2" style="margin-bottom:16px;">
-      <div class="card" style="text-align:center; padding: 28px 20px;">
-        <p class="card-title">Current Phase</p>
-        <div class="cycle-ring" style="margin: 8px 0 16px;">
-          <svg width="110" height="110" viewBox="0 0 110 110">
-            <circle cx="55" cy="55" r="46" fill="none" stroke="#F4F2ED" stroke-width="10"/>
-            <circle cx="55" cy="55" r="46" fill="none" stroke="#D4748A" stroke-width="10" stroke-dasharray="289" id="phase-arc" stroke-dashoffset="200" stroke-linecap="round" transform="rotate(-90 55 55)"/>
-          </svg>
-          <div style="position:absolute; text-align:center;">
-            <div class="big-num" id="cycle-day-num">—</div>
-            <div class="sub">cycle day</div>
+
+    <!-- Tabs -->
+    <div class="section-tabs">
+      <button class="tab active" onclick="switchPeriodTab('today', this)">Today</button>
+      <button class="tab" onclick="switchPeriodTab('calendar', this)">Calendar</button>
+      <button class="tab" onclick="switchPeriodTab('history', this)">History & Insights</button>
+    </div>
+
+    <!-- TODAY TAB -->
+    <div id="period-tab-today">
+      <div class="grid-2" style="margin-bottom:16px;">
+        <div class="card" style="text-align:center; padding: 28px 20px;">
+          <p class="card-title">Current Phase</p>
+          <div class="cycle-ring" style="margin: 8px 0 16px;">
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <circle cx="55" cy="55" r="46" fill="none" stroke="#F4F2ED" stroke-width="10"/>
+              <circle cx="55" cy="55" r="46" fill="none" stroke="#D4748A" stroke-width="10" stroke-dasharray="289" id="phase-arc" stroke-dashoffset="200" stroke-linecap="round" transform="rotate(-90 55 55)"/>
+            </svg>
+            <div style="position:absolute; text-align:center;">
+              <div class="big-num" id="cycle-day-num">—</div>
+              <div class="sub">cycle day</div>
+            </div>
           </div>
+          <div style="font-size:14px; font-weight:500;" id="phase-name">—</div>
+          <div class="sub mt-8" id="phase-desc">Log your last period to begin</div>
         </div>
-        <div style="font-size:14px; font-weight:500;" id="phase-name">—</div>
-        <div class="sub mt-8" id="phase-desc">Log your last period to begin</div>
+        <div class="card">
+          <p class="card-title">Period Prediction</p>
+          <div id="period-prediction">
+            <div class="empty-state">Log your last period date to see predictions</div>
+          </div>
+          <div class="divider"></div>
+          <p class="card-title">Log Last Period</p>
+          <div class="form-group">
+            <label>Start date</label>
+            <input type="date" id="period-start-date">
+          </div>
+          <div class="form-group">
+            <label>Average cycle length (days)</label>
+            <input type="number" id="cycle-length" value="28" min="21" max="40">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="savePeriodData()" style="width:100%;">Save & Predict</button>
+        </div>
+      </div>
+
+      <!-- Today's tip -->
+      <div class="card" id="daily-tip-card" style="margin-bottom:16px;display:none;">
+        <p class="card-title">✨ Today's Personalised Tip</p>
+        <div id="daily-tip-content" style="font-size:13.5px;line-height:1.7;color:var(--text2);"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="flex-between" style="margin-bottom:14px;">
+          <p class="card-title" style="margin:0;">Today's Symptoms</p>
+          <span class="text-sm text-muted" id="symptom-date-label"></span>
+        </div>
+        <div class="symptom-grid" id="symptom-grid"></div>
+        <button class="btn btn-primary btn-sm mt-12" onclick="saveSymptoms()" style="width:100%">Save Today's Symptoms</button>
+      </div>
+
+      <div class="card">
+        <p class="card-title">Cycle Phase Guide</p>
+        <div class="phase-bar" id="phase-bar"></div>
+        <div id="phase-tips" style="margin-top:14px; font-size:13px; color:var(--text2); line-height:1.7;"></div>
+      </div>
+    </div>
+
+    <!-- CALENDAR TAB -->
+    <div id="period-tab-calendar" style="display:none;">
+      <div class="card">
+        <div class="cal-nav">
+          <button class="btn btn-sm" onclick="changePeriodCalMonth(-1)">← Prev</button>
+          <h3 id="period-cal-label" style="font-family:var(--font-serif);font-size:18px;"></h3>
+          <button class="btn btn-sm" onclick="changePeriodCalMonth(1)">Next →</button>
+        </div>
+        <!-- Legend -->
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+          <span class="legend-item"><div class="legend-dot" style="background:var(--rose);"></div> Period</span>
+          <span class="legend-item"><div class="legend-dot" style="background:var(--amber);"></div> Ovulation</span>
+          <span class="legend-item"><div class="legend-dot" style="background:var(--sage);"></div> Follicular</span>
+          <span class="legend-item"><div class="legend-dot" style="background:var(--indigo);"></div> Luteal</span>
+        </div>
+        <div id="period-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:var(--radius);overflow:hidden;"></div>
+      </div>
+    </div>
+
+    <!-- HISTORY & INSIGHTS TAB -->
+    <div id="period-tab-history" style="display:none;">
+      <div class="card" style="margin-bottom:16px;">
+        <div class="flex-between" style="margin-bottom:14px;">
+          <p class="card-title" style="margin:0;">AI Phase Insights</p>
+          <button class="btn btn-primary btn-sm" onclick="generateCycleInsights()">✨ Generate</button>
+        </div>
+        <p class="text-sm text-muted" style="margin-bottom:12px;">Based on your logged symptoms, get personalised predictions and suggestions for each phase of your cycle.</p>
+        <div id="cycle-insights"></div>
       </div>
       <div class="card">
-        <p class="card-title">Period Prediction</p>
-        <div id="period-prediction">
-          <div class="empty-state">Log your last period date to see predictions</div>
-        </div>
-        <div class="divider"></div>
-        <p class="card-title">Log Last Period</p>
-        <div class="form-group">
-          <label>Start date</label>
-          <input type="date" id="period-start-date">
-        </div>
-        <div class="form-group">
-          <label>Average cycle length (days)</label>
-          <input type="number" id="cycle-length" value="28" min="21" max="40">
-        </div>
-        <button class="btn btn-primary btn-sm" onclick="savePeriodData()" style="width:100%;">Save & Predict</button>
+        <p class="card-title">Symptom History</p>
+        <div id="symptom-history-list"></div>
       </div>
-    </div>
-    <div class="card">
-      <div class="flex-between" style="margin-bottom:14px;">
-        <p class="card-title" style="margin:0;">Today's Symptoms</p>
-        <span class="text-sm text-muted" id="symptom-date-label"></span>
-      </div>
-      <div class="symptom-grid" id="symptom-grid"></div>
-      <button class="btn btn-sm mt-12" onclick="saveSymptoms()" style="width:100%">Save Today's Symptoms</button>
-    </div>
-    <div class="card mt-16">
-      <p class="card-title">Cycle Phase Guide</p>
-      <div class="phase-bar" id="phase-bar"></div>
-      <div id="phase-tips" style="margin-top:14px; font-size:13px; color:var(--text2); line-height:1.7;"></div>
     </div>
   </div>
 
@@ -732,6 +902,18 @@
     </button>
   </div>
 </nav>
+
+<!-- Mobile day events bottom sheet -->
+<div class="day-modal-overlay" id="day-modal-overlay" onclick="closeDayModal(event)">
+  <div class="day-modal">
+    <div class="day-modal-handle"></div>
+    <div class="flex-between" style="margin-bottom:16px;">
+      <h3 id="day-modal-title" style="font-family:var(--font-serif);font-size:18px;"></h3>
+      <button class="btn btn-primary btn-sm" id="day-modal-add-btn">+ Add Event</button>
+    </div>
+    <div id="day-modal-list"></div>
+  </div>
+</div>
 
 <!-- Sync status pill -->
 <div class="sync-status saved" id="sync-status" style="display:none;">
@@ -1050,6 +1232,8 @@ function showPage(id, el) {
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
 
+function isMobile() { return window.innerWidth <= 1024; }
+
 function changeMonth(dir) {
   calMonth += dir;
   if (calMonth > 11) { calMonth = 0; calYear++; }
@@ -1057,10 +1241,39 @@ function changeMonth(dir) {
   renderCalendar();
 }
 
+function getPeriodDays(year, month) {
+  const days = new Set();
+  if (!window.state.period.lastStart) return days;
+  const start = new Date(window.state.period.lastStart);
+  for (let cycle = 0; cycle < 6; cycle++) {
+    const ps = new Date(start);
+    ps.setDate(ps.getDate() + cycle * window.state.period.cycleLength);
+    for (let d = 0; d < 5; d++) {
+      const pd = new Date(ps);
+      pd.setDate(pd.getDate() + d);
+      if (pd.getFullYear() === year && pd.getMonth() === month)
+        days.add(pd.getDate());
+    }
+  }
+  return days;
+}
+
+function getCatColor(cat) {
+  const colors = { work:'#6B7FD4', social:'#D4748A', travel:'#4A9B8E', task:'#D4A843', health:'#7A9E7E', personal:'#C4956A' };
+  return colors[cat] || '#A8A39C';
+}
+
 function renderCalendar() {
+  if (isMobile()) renderMobileCalendar();
+  else renderDesktopCalendar();
+}
+
+function renderDesktopCalendar() {
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  document.getElementById('cal-month-label').textContent = months[calMonth] + ' ' + calYear;
+  const labelEl = document.getElementById('cal-month-label');
+  if (labelEl) labelEl.textContent = months[calMonth] + ' ' + calYear;
   const grid = document.getElementById('cal-grid');
+  if (!grid) return;
   const headers = grid.querySelectorAll('.cal-header');
   grid.innerHTML = '';
   headers.forEach(h => grid.appendChild(h.cloneNode(true)));
@@ -1068,21 +1281,7 @@ function renderCalendar() {
   const first = new Date(calYear, calMonth, 1).getDay();
   const days = new Date(calYear, calMonth + 1, 0).getDate();
   const today = new Date();
-
-  let periodDays = new Set();
-  if (window.state.period.lastStart) {
-    const start = new Date(window.state.period.lastStart);
-    for (let cycle = 0; cycle < 3; cycle++) {
-      const ps = new Date(start);
-      ps.setDate(ps.getDate() + cycle * window.state.period.cycleLength);
-      for (let d = 0; d < 5; d++) {
-        const pd = new Date(ps);
-        pd.setDate(pd.getDate() + d);
-        if (pd.getFullYear() === calYear && pd.getMonth() === calMonth)
-          periodDays.add(pd.getDate());
-      }
-    }
-  }
+  const periodDays = getPeriodDays(calYear, calMonth);
 
   for (let i = 0; i < first; i++) {
     const cell = document.createElement('div');
@@ -1091,33 +1290,101 @@ function renderCalendar() {
     cell.innerHTML = `<div class="cal-date">${prev.getDate()}</div>`;
     grid.appendChild(cell);
   }
-
   for (let d = 1; d <= days; d++) {
     const cell = document.createElement('div');
     cell.className = 'cal-day';
     if (d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear())
       cell.classList.add('today');
     cell.innerHTML = `<div class="cal-date">${d}</div>`;
-
     if (periodDays.has(d)) {
       const dot = document.createElement('div');
       dot.className = 'cal-dot period';
       dot.textContent = '🌸 Period';
       cell.appendChild(dot);
     }
-
     const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dayEvents = window.state.events.filter(e => e.date === dateStr);
-    dayEvents.forEach(ev => {
+    window.state.events.filter(e => e.date === dateStr).forEach(ev => {
       const dot = document.createElement('div');
       dot.className = `cal-dot ${ev.category}`;
       dot.textContent = ev.title;
       cell.appendChild(dot);
     });
-
     cell.onclick = () => showDayEvents(dateStr, d);
     grid.appendChild(cell);
   }
+}
+
+function renderMobileCalendar() {
+  const container = document.getElementById('cal-scroll-container');
+  if (!container) return;
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dayLabels = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  const today = new Date();
+  let html = '';
+
+  for (let m = 0; m < 3; m++) {
+    let month = calMonth + m;
+    let year = calYear;
+    if (month > 11) { month -= 12; year++; }
+    const periodDays = getPeriodDays(year, month);
+    const first = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+
+    html += `<div class="mobile-cal-month">
+      <div class="mobile-cal-month-label">${monthNames[month]} ${year}</div>
+      <div class="mobile-cal-grid">
+        ${dayLabels.map(d => `<div class="mobile-cal-header">${d}</div>`).join('')}
+        ${Array(first).fill('<div class="mobile-cal-day other-month"></div>').join('')}`;
+
+    for (let d = 1; d <= totalDays; d++) {
+      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isToday = d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+      const evs = window.state.events.filter(e => e.date === dateStr);
+      const hasPeriod = periodDays.has(d);
+      const dots = [
+        ...(hasPeriod ? [`<div class="mobile-cal-dot" style="background:#D4748A;"></div>`] : []),
+        ...evs.slice(0,3).map(ev => `<div class="mobile-cal-dot" style="background:${getCatColor(ev.category)};"></div>`)
+      ].join('');
+
+      html += `<div class="mobile-cal-day${isToday ? ' today' : ''}" onclick="showMobileDayEvents('${dateStr}',${d},${month},${year})">
+        <div class="mobile-cal-date">${d}</div>
+        <div class="mobile-cal-dots">${dots}</div>
+      </div>`;
+    }
+    html += `</div></div>`;
+  }
+  container.innerHTML = html;
+}
+
+function showMobileDayEvents(dateStr, d, month, year) {
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('day-modal-title').textContent = `${monthNames[month]} ${d}`;
+  document.getElementById('day-modal-add-btn').onclick = () => { closeDayModal(); openEventModal(dateStr); };
+  const evs = window.state.events.filter(e => e.date === dateStr);
+  const list = document.getElementById('day-modal-list');
+  list.innerHTML = evs.length ? evs.map(ev => `
+    <div class="todo-item">
+      <div style="width:10px;height:10px;border-radius:50%;background:${getCatColor(ev.category)};flex-shrink:0;margin-top:5px;"></div>
+      <div style="flex:1;">
+        <div style="font-size:15px;font-weight:500;">${ev.title}</div>
+        ${ev.time ? `<div class="text-sm text-muted">🕐 ${formatTime(ev.time)}</div>` : ''}
+        ${ev.notes ? `<div class="text-sm text-muted">${ev.notes}</div>` : ''}
+        <div class="text-sm text-muted" style="text-transform:capitalize;">${ev.category}</div>
+      </div>
+      <span class="todo-del" onclick="deleteMobileEvent('${ev.id}','${dateStr}',${d},${month},${year})">✕</span>
+    </div>`).join('')
+  : `<div class="empty-state" style="padding:20px 0;">No events yet.<br><span style="font-size:12px;">Tap "+ Add Event" to add one.</span></div>`;
+  document.getElementById('day-modal-overlay').classList.add('open');
+}
+
+function deleteMobileEvent(id, dateStr, d, month, year) {
+  window.state.events = window.state.events.filter(e => e.id !== id);
+  save(); renderCalendar(); showMobileDayEvents(dateStr, d, month, year);
+}
+
+function closeDayModal(e) {
+  if (!e || e.target === document.getElementById('day-modal-overlay'))
+    document.getElementById('day-modal-overlay').classList.remove('open');
 }
 
 function showDayEvents(dateStr, d) {
@@ -1126,22 +1393,20 @@ function showDayEvents(dateStr, d) {
   const list = document.getElementById('day-events-list');
   document.getElementById('day-events-title').textContent = months[calMonth] + ' ' + d + ', ' + calYear;
   const evs = window.state.events.filter(e => e.date === dateStr);
-  if (evs.length === 0) {
-    list.innerHTML = `<div class="empty-state" style="padding:12px 0">No events — <a href="#" onclick="openEventModal('${dateStr}')">add one?</a></div>`;
-  } else {
-    list.innerHTML = evs.map(ev => `
-      <div class="todo-item">
-        <span class="tag tag-${ev.category}" style="flex-shrink:0">${ev.category}</span>
-        <div style="flex:1;">
-          <div style="font-size:14px;font-weight:500;">${ev.title}</div>
-          ${ev.time ? `<div class="text-sm text-muted">🕐 ${formatTime(ev.time)}${ev.reminder !== null && ev.reminder !== undefined ? ' · reminder set' : ''}</div>` : ''}
-          ${ev.notes ? `<div class="text-sm text-muted">${ev.notes}</div>` : ''}
-        </div>
-        <span class="todo-del" onclick="deleteEvent('${ev.id}')">✕</span>
-      </div>`).join('');
-  }
+  list.innerHTML = evs.length ? evs.map(ev => `
+    <div class="todo-item">
+      <span class="tag tag-${ev.category}" style="flex-shrink:0">${ev.category}</span>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:500;">${ev.title}</div>
+        ${ev.time ? `<div class="text-sm text-muted">🕐 ${formatTime(ev.time)}${ev.reminder !== null && ev.reminder !== undefined ? ' · reminder set' : ''}</div>` : ''}
+        ${ev.notes ? `<div class="text-sm text-muted">${ev.notes}</div>` : ''}
+      </div>
+      <span class="todo-del" onclick="deleteEvent('${ev.id}')">✕</span>
+    </div>`).join('')
+  : `<div class="empty-state" style="padding:12px 0">No events — <a href="#" onclick="openEventModal('${dateStr}')">add one?</a></div>`;
   panel.style.display = 'block';
 }
+
 
 function openEventModal(date) {
   document.getElementById('ev-date').value = date || new Date().toISOString().split('T')[0];
@@ -1246,6 +1511,65 @@ const phaseInfo = [
   { name: 'Luteal', days: '17–28', color: 'var(--indigo)', class: 'phase-luteal', tips: 'Progesterone rises. You may want more solitude and slower activities. Great for detail work. Cravings increase — magnesium-rich foods (dark chocolate, nuts) help PMS symptoms.' }
 ];
 
+let periodCalYear = new Date().getFullYear();
+let periodCalMonth = new Date().getMonth();
+
+function switchPeriodTab(tab, el) {
+  document.querySelectorAll('#page-period .section-tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('period-tab-today').style.display = tab === 'today' ? 'block' : 'none';
+  document.getElementById('period-tab-calendar').style.display = tab === 'calendar' ? 'block' : 'none';
+  document.getElementById('period-tab-history').style.display = tab === 'history' ? 'block' : 'none';
+  if (tab === 'calendar') renderPeriodCalendar();
+  if (tab === 'history') renderSymptomHistory();
+}
+
+function changePeriodCalMonth(dir) {
+  periodCalMonth += dir;
+  if (periodCalMonth > 11) { periodCalMonth = 0; periodCalYear++; }
+  if (periodCalMonth < 0) { periodCalMonth = 11; periodCalYear--; }
+  renderPeriodCalendar();
+}
+
+function getDayPhase(year, month, day) {
+  if (!window.state.period.lastStart) return null;
+  const start = new Date(window.state.period.lastStart);
+  const target = new Date(year, month, day);
+  const diff = Math.floor((target - start) / 86400000);
+  const cycleLen = window.state.period.cycleLength;
+  const d = ((diff % cycleLen) + cycleLen) % cycleLen + 1;
+  if (d <= 5) return { phase: 'period', color: 'var(--rose)', bg: 'var(--rose-light)', label: '🩸' };
+  if (d <= 13) return { phase: 'follicular', color: 'var(--sage)', bg: 'var(--sage-light)', label: '🌱' };
+  if (d <= 16) return { phase: 'ovulation', color: 'var(--amber)', bg: 'var(--amber-light)', label: '✨' };
+  return { phase: 'luteal', color: 'var(--indigo)', bg: 'var(--indigo-light)', label: '🌙' };
+}
+
+function renderPeriodCalendar() {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('period-cal-label').textContent = months[periodCalMonth] + ' ' + periodCalYear;
+  const grid = document.getElementById('period-cal-grid');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const first = new Date(periodCalYear, periodCalMonth, 1).getDay();
+  const total = new Date(periodCalYear, periodCalMonth + 1, 0).getDate();
+  const today = new Date();
+
+  let html = days.map(d => `<div style="background:var(--surface2);padding:8px 4px;text-align:center;font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;">${d}</div>`).join('');
+  html += Array(first).fill('<div style="background:var(--surface);min-height:60px;"></div>').join('');
+
+  for (let d = 1; d <= total; d++) {
+    const phase = getDayPhase(periodCalYear, periodCalMonth, d);
+    const isToday = d === today.getDate() && periodCalMonth === today.getMonth() && periodCalYear === today.getFullYear();
+    const dateStr = `${periodCalYear}-${String(periodCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const daySymptoms = window.state.period.symptoms[dateStr] || [];
+    html += `<div style="background:${phase ? phase.bg : 'var(--surface)'};min-height:60px;padding:6px 4px;position:relative;">
+      <div style="font-size:12px;font-weight:${isToday?'700':'500'};color:${isToday?'var(--accent)':'var(--text)'};margin-bottom:2px;">${d}</div>
+      ${phase ? `<div style="font-size:11px;color:${phase.color};font-weight:500;">${phase.label} ${phase.phase === 'ovulation' ? 'OV' : phase.phase === 'period' ? 'Period' : ''}</div>` : ''}
+      ${daySymptoms.length ? `<div style="font-size:9px;color:var(--text3);margin-top:2px;">${daySymptoms.slice(0,2).join(', ')}${daySymptoms.length > 2 ? '…' : ''}</div>` : ''}
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
 function savePeriodData() {
   window.state.period.lastStart = document.getElementById('period-start-date').value;
   window.state.period.cycleLength = parseInt(document.getElementById('cycle-length').value) || 28;
@@ -1255,12 +1579,163 @@ function savePeriodData() {
 function saveSymptoms() {
   const today = new Date().toISOString().split('T')[0];
   const active = [...document.querySelectorAll('.symptom-btn.active')].map(b => b.dataset.symptom);
+  // Save with phase info
+  const phaseData = getCyclePhaseForDate(today);
   window.state.period.symptoms[today] = active;
+  if (!window.state.period.symptomLog) window.state.period.symptomLog = {};
+  window.state.period.symptomLog[today] = {
+    symptoms: active,
+    phase: phaseData?.phase || null,
+    cycleDay: phaseData?.day || null
+  };
   save();
-  alert('Symptoms saved for today!');
+  const btn = document.querySelector('#page-period .btn-primary');
+  if (btn) { btn.textContent = '✓ Saved!'; setTimeout(() => { btn.textContent = "Save Today's Symptoms"; }, 1500); }
+}
+
+// Auto-reset symptoms at midnight
+function checkSymptomReset() {
+  const today = new Date().toISOString().split('T')[0];
+  const lastReset = localStorage.getItem('symptomResetDate');
+  if (lastReset !== today) {
+    localStorage.setItem('symptomResetDate', today);
+    // Clear the UI selections (data is already saved by date key so nothing is lost)
+    document.querySelectorAll('.symptom-btn.active').forEach(b => b.classList.remove('active'));
+  }
+}
+
+function renderDailyTip() {
+  const today = new Date().toISOString().split('T')[0];
+  if (!window.state.period.lastStart) return;
+  const phaseData = getCyclePhaseForDate(today);
+  if (!phaseData) return;
+
+  // Get historical symptoms for this phase
+  const log = window.state.period.symptomLog || {};
+  const phaseSymptoms = Object.values(log)
+    .filter(e => e.phase === phaseData.phase && e.symptoms?.length)
+    .flatMap(e => e.symptoms);
+
+  if (!phaseSymptoms.length) {
+    document.getElementById('daily-tip-card').style.display = 'none';
+    return;
+  }
+
+  // Count most common symptoms
+  const counts = {};
+  phaseSymptoms.forEach(s => counts[s] = (counts[s] || 0) + 1);
+  const topSymptoms = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0,3).map(e => e[0]);
+
+  const tips = {
+    'Cramps': 'You often get cramps around now — try a heating pad, magnesium, or light stretching.',
+    'Fatigue': "You're typically low energy today — schedule lighter tasks and prioritise sleep.",
+    'Acne': 'Breakouts tend to show up for you around this phase — keep stress low, stay hydrated, and go easy on dairy.',
+    'Mood swings': "Your mood can shift a lot during this phase — journaling and time alone can really help.",
+    'Bloating': "Bloating is common for you right now — reduce salt, drink plenty of water, and avoid carbonated drinks.",
+    'Headache': "You often get headaches in this phase — stay hydrated and take breaks from screens.",
+    'Cravings': "Cravings tend to hit hard for you around now — keep magnesium-rich snacks handy (dark chocolate, nuts).",
+    'Anxiety': "You tend to feel more anxious during this phase — breathwork, walks, and limiting caffeine can help.",
+    'Back pain': "Back pain is common for you here — gentle stretching and a heat pad can ease it.",
+    'Nausea': "Nausea sometimes hits for you in this phase — eat small meals and ginger tea can help.",
+    'Breast tenderness': "Tenderness is normal for you around now — supportive bras and reducing caffeine can ease it.",
+    'Spotting': "You sometimes experience spotting here — this is normal for your cycle."
+  };
+
+  const tip = tips[topSymptoms[0]] || `Based on your history, ${topSymptoms.join(', ')} tend to show up during your ${phaseData.name} phase. Listen to your body today.`;
+
+  document.getElementById('daily-tip-card').style.display = 'block';
+  document.getElementById('daily-tip-content').innerHTML = `
+    <div style="margin-bottom:8px;font-size:12px;color:${phaseData.color};font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">${phaseData.name} Phase · Day ${phaseData.day}</div>
+    <p>${tip}</p>
+    ${topSymptoms.length > 1 ? `<p style="margin-top:8px;color:var(--text3);font-size:12px;">Also typical for you now: ${topSymptoms.slice(1).join(', ')}</p>` : ''}
+  `;
+}
+
+function renderSymptomHistory() {
+  const log = window.state.period.symptomLog || {};
+  const entries = Object.entries(log).sort((a,b) => b[0].localeCompare(a[0])).slice(0, 30);
+  const el = document.getElementById('symptom-history-list');
+  if (!entries.length) {
+    el.innerHTML = '<div class="empty-state">No symptom history yet — start logging daily!</div>';
+    return;
+  }
+  const phaseColors = { period: 'var(--rose)', follicular: 'var(--sage)', ovulation: 'var(--amber)', luteal: 'var(--indigo)' };
+  el.innerHTML = entries.map(([date, entry]) => {
+    const d = new Date(date);
+    const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    return `<div class="mood-history-item">
+      <div class="flex-between" style="margin-bottom:4px;">
+        <span style="font-size:13px;font-weight:500;">${label}</span>
+        ${entry.phase ? `<span style="font-size:11px;color:${phaseColors[entry.phase]||'var(--text3)'};font-weight:500;text-transform:capitalize;">${entry.phase}${entry.cycleDay ? ' · Day ' + entry.cycleDay : ''}</span>` : ''}
+      </div>
+      ${entry.symptoms?.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;">
+        ${entry.symptoms.map(s => `<span style="font-size:11px;padding:2px 8px;background:var(--rose-light);color:var(--rose);border-radius:10px;">${s}</span>`).join('')}
+      </div>` : '<span class="text-sm text-muted">No symptoms logged</span>'}
+    </div>`;
+  }).join('');
+}
+
+async function generateCycleInsights() {
+  const log = window.state.period.symptomLog || {};
+  const entries = Object.values(log).filter(e => e.symptoms?.length);
+  if (entries.length < 3) {
+    document.getElementById('cycle-insights').innerHTML = '<div class="empty-state">Log symptoms for at least 3 days to generate insights.</div>';
+    return;
+  }
+
+  // Build phase summaries
+  const phases = ['period','follicular','ovulation','luteal'];
+  const phaseSummaries = {};
+  phases.forEach(phase => {
+    const phaseEntries = entries.filter(e => e.phase === phase);
+    if (!phaseEntries.length) return;
+    const counts = {};
+    phaseEntries.flatMap(e => e.symptoms).forEach(s => counts[s] = (counts[s] || 0) + 1);
+    phaseSummaries[phase] = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0,5).map(([s,c]) => `${s} (${c}x)`).join(', ');
+  });
+
+  document.getElementById('cycle-insights').innerHTML = '<div class="loading"><div class="spinner"></div>Analysing your cycle patterns...</div>';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1200,
+        messages: [{
+          role: 'user',
+          content: `I track my menstrual cycle symptoms. Here are my most common symptoms by phase: ${JSON.stringify(phaseSummaries)}. 
+          
+          Please write a short personalised insight for each phase I have data for. For each phase include:
+          1. A 1-sentence summary of my typical experience
+          2. 2-3 specific, actionable daily suggestions based on MY symptoms (not generic advice)
+          3. One thing to watch out for or prepare for in advance
+          
+          Make it warm, personal, and practical — like advice from a knowledgeable friend. Keep each phase section to 3-4 sentences max.
+          Return ONLY a JSON array: [{phase, summary, suggestions, watchOut}]. No markdown, no extra text.`
+        }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content.map(c => c.text||'').join('').replace(/```json|```/g,'').trim();
+    const insights = JSON.parse(text);
+    const phaseColors = { period: 'var(--rose)', follicular: 'var(--sage)', ovulation: 'var(--amber)', luteal: 'var(--indigo)' };
+    const phaseNames = { period: '🩸 Menstrual', follicular: '🌱 Follicular', ovulation: '✨ Ovulation', luteal: '🌙 Luteal' };
+    document.getElementById('cycle-insights').innerHTML = insights.map(ins => `
+      <div style="margin-bottom:16px;padding:16px;background:var(--surface2);border-radius:var(--radius-sm);border-left:3px solid ${phaseColors[ins.phase]||'var(--accent)'};">
+        <div style="font-size:13px;font-weight:600;color:${phaseColors[ins.phase]||'var(--text)'};margin-bottom:8px;">${phaseNames[ins.phase]||ins.phase}</div>
+        <p style="font-size:13px;line-height:1.6;margin-bottom:8px;">${ins.summary}</p>
+        <p style="font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:6px;"><strong>Tips for you:</strong> ${ins.suggestions}</p>
+        <p style="font-size:12px;color:var(--text3);line-height:1.6;">⚠️ ${ins.watchOut}</p>
+      </div>`).join('');
+  } catch(e) {
+    document.getElementById('cycle-insights').innerHTML = '<div class="empty-state">Could not generate insights. Try again.</div>';
+  }
 }
 
 function renderPeriod() {
+  checkSymptomReset();
   document.getElementById('symptom-date-label').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
   const today = new Date().toISOString().split('T')[0];
   const todaySymptoms = window.state.period.symptoms[today] || [];
@@ -1318,6 +1793,8 @@ function renderPeriod() {
     document.getElementById('period-start-date').value = window.state.period.lastStart || '';
     document.getElementById('cycle-length').value = window.state.period.cycleLength;
   }
+
+  renderDailyTip();
 }
 
 // ===== GROCERY =====
@@ -1417,9 +1894,12 @@ async function generateMeals() {
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 1000,
         messages: [{ role: 'user', content: `I have these ingredients: ${ingredients.join(', ')}.${phaseContext} Suggest 3 meal ideas I can make. For each meal include: name, a one-sentence description, key nutritional benefit for my current phase, and approximate prep time. Return ONLY a JSON array with objects: {name, description, benefit, prepTime, phase}. No markdown, no extra text.` }]
       })
@@ -1769,6 +2249,16 @@ let selectedFeelings = new Set();
 
 function renderMood() {
   const today = new Date().toISOString().split('T')[0];
+
+  // Auto-reset UI selections at midnight (data is saved by date key, nothing lost)
+  const lastMoodReset = localStorage.getItem('moodResetDate');
+  if (lastMoodReset !== today) {
+    localStorage.setItem('moodResetDate', today);
+    selectedMoodEmoji = null;
+    selectedEnergy = null;
+    selectedFeelings = new Set();
+  }
+
   const todayEntry = window.state.mood[today] || {};
   const phaseInfo = getCyclePhaseForDate(today);
 
